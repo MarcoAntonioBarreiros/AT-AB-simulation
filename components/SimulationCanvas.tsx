@@ -102,7 +102,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
       prev.antibodyCount !== config.antibodyCount ||
       prev.antibodyType !== config.antibodyType ||
       prev.epitopesPerAntigen !== config.epitopesPerAntigen ||
-      prev.isHapten !== config.isHapten;
+      prev.isHapten !== config.isHapten ||
+      prev.antigenRadius !== config.antigenRadius;
 
     if (needsReset) {
       initEntities(canvas.width, canvas.height);
@@ -159,7 +160,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
     });
 
     // 2. Repulsion
-    const repR = AG_RADIUS * 1.8; // Increased repulsion radius
+    const repR = config.antigenRadius * 1.8; // Increased repulsion radius
     const repK = 0.05; // Stronger repulsion
     for(let i=0; i<entities.length; i++) {
         const a = entities[i];
@@ -448,7 +449,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
             });
 
             ctx.beginPath();
-            ctx.arc(cx, cy, maxR + AG_RADIUS + 14, 0, Math.PI * 2);
+            ctx.arc(cx, cy, maxR + config.antigenRadius + 14, 0, Math.PI * 2);
             const c = COLOR_LATTICE_HULL[ci % COLOR_LATTICE_HULL.length];
             const alpha = isPrecip ? 0.12 : 0.06;
             ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;

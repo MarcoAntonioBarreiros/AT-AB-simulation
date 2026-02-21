@@ -10,7 +10,8 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   temperature: 30,
   showLinks: true,
   showLabels: false,
-  isHapten: false
+  isHapten: false,
+  antigenRadius: 18
 };
 
 // Physics Constants (from new simulation)

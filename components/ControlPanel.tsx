@@ -151,6 +151,23 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, setConfig, isRunnin
         <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-700/50">
            <Toggle label="Show Lattice" checked={config.showLinks} onChange={(v) => handleChange('showLinks', v)} />
            <Toggle label="Hapten Mode" checked={config.isHapten} onChange={(v) => handleChange('isHapten', v)} />
+           <div className="col-span-2 flex items-center justify-between">
+              <label className="text-xs font-medium text-slate-300">Antigen Size</label>
+              <div className="flex bg-slate-700 rounded-lg p-0.5 border border-slate-600">
+                  <button 
+                    onClick={() => handleChange('antigenRadius', 18)}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${config.antigenRadius === 18 ? 'bg-slate-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    1x
+                  </button>
+                  <button 
+                    onClick={() => handleChange('antigenRadius', 36)}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${config.antigenRadius === 36 ? 'bg-slate-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    2x
+                  </button>
+              </div>
+           </div>
         </div>
 
       </div>

@@ -57,6 +57,7 @@ export interface SimulationConfig {
   showLinks: boolean;
   showLabels: boolean;
   isHapten: boolean; // Monovalent antigen mode
+  antigenRadius: number;
 }
 
 export interface SimulationStats {
