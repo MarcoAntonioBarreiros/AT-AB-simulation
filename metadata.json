@@ -1,0 +1,5 @@
+{
+  "name": "ImmunoSim: Antigen-Antibody Dynamics",
+  "description": "A comprehensive, interactive simulation of antigen-antibody interactions demonstrating the Heidelberger-Kendall curve, Prozone, Equivalence, and Post-zone phenomena with real-time physics.",
+  "requestFramePermissions": []
+}
