@@ -45,7 +45,7 @@ const App: React.FC = () => {
             </div>
          </div>
          <div className="text-xs text-slate-500 hidden md:block">
-            v2.0 • React • TypeScript • Physics Engine
+            v2.1 (Fixed) • React • TypeScript • Physics Engine
          </div>
       </header>
 
