@@ -39,12 +39,13 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
     const verts = [];
     for(let i=0; i<nv; i++) {
         const a = i/nv * Math.PI * 2;
-        const r = AG_RADIUS * (0.82 + rand(0, 0.36));
+        // Use config.antigenRadius instead of constant AG_RADIUS
+        const r = config.antigenRadius * (0.82 + rand(0, 0.36));
         verts.push({a, r});
     }
     return {
       id, kind: 'Ag', x, y, vx: rand(-0.15, 0.15), vy: rand(-0.15, 0.15),
-      angle: 0, radius: AG_RADIUS,
+      angle: 0, radius: config.antigenRadius,
       epitopes: ang.map(a => ({ ang: a, occ: false, abId: -1 })),
       verts, precipitated: false, cluster: -1
     };
@@ -137,8 +138,11 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
 
   const updatePhysics = (width: number, height: number) => {
     const entities = entitiesRef.current;
-    const jitter = config.temperature > 0 ? 0.6 : 0.18;
-    const maxV = config.temperature > 0 ? 1.3 : 0.8;
+    
+    // Continuous temperature scaling
+    const tFactor = config.temperature / 100;
+    const jitter = 0.1 + tFactor * 0.9; // Range: 0.1 to 1.0
+    const maxV = 0.5 + tFactor * 1.5;   // Range: 0.5 to 2.0
 
     // 1. Integrate & Wall Bounce
     const margin = 25;
@@ -233,7 +237,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
             if (best) {
                 // Probabilistic binding based on affinity
                 // In prozone (high Ab), competition is high.
-                if (Math.random() < affinity * 0.5) { // Reduced base binding rate to allow more mixing
+                // Adjusted: affinity * 0.3 to make it less "instant"
+                if (Math.random() < affinity * 0.3) { 
                     best.ag.epitopes[best.ei].occ = true;
                     best.ag.epitopes[best.ei].abId = ab.id;
                     arm.bound = true;
@@ -254,7 +259,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
                 const boundArms = ab.arms.filter(a => a.bound).length;
                 const avidityFactor = boundArms > 1 ? 0.1 : 1.0;
                 
-                if (Math.random() < kdBase * 0.05 * avidityFactor) {
+                // Increased base dissociation chance slightly to make slider more responsive
+                if (Math.random() < kdBase * 0.08 * avidityFactor) {
                     const ag = agMap.get(arm.target.agId);
                     if (ag) {
                         const ep = ag.epitopes[arm.target.epIdx];
