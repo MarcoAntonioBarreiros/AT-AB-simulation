@@ -15,7 +15,7 @@ export const DEFAULT_CONFIG: SimulationConfig = {
 };
 
 // Physics Constants (from new simulation)
-// export const AG_RADIUS = 18; // Removed: now in config
+export const AG_RADIUS = 18;
 export const FAB_LENGTH = 18;
 export const FC_LENGTH_IGG = 20;
 export const FC_LENGTH_IGM = 14;
