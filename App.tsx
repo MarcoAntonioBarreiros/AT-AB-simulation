@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+// Atualizado para Português
 import SimulationCanvas from './components/SimulationCanvas';
 import ControlPanel from './components/ControlPanel';
 import StatsPanel from './components/StatsPanel';
