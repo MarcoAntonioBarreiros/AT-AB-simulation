@@ -43,8 +43,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
         verts.push({a, r});
     }
     return {
-      id, kind: 'Ag', x, y, vx: rand(-0.15, 0.15), vy: rand(-0.15, 0.15),
-      angle: 0, radius: AG_RADIUS,
+      id, kind: 'Ag', x, y, vx: rand(-0.5, 0.5), vy: rand(-0.5, 0.5),
+      angle: rand(0, Math.PI * 2), radius: AG_RADIUS,
       epitopes: ang.map(a => ({ ang: a, occ: false, abId: -1 })),
       verts, precipitated: false, cluster: -1
     };
@@ -63,9 +63,10 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
     }
     return {
         id, kind: 'Ab', abType: t, fcLen: fc, x, y,
-        vx: rand(-0.2, 0.2), vy: rand(-0.2, 0.2), angle: rand(0, Math.PI * 2),
+        vx: rand(-0.5, 0.5), vy: rand(-0.5, 0.5), angle: rand(0, Math.PI * 2),
         arms: armAngles.map(ang => ({ ang, bound: false, target: null })),
-        radius: 10 // approximate for collision
+        radius: 10, // approximate for collision
+        precipitated: false, cluster: -1
     };
   };
 
@@ -76,9 +77,9 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
 
     // Linear scaling logic from the improved code
     // Cap counts to prevent performance issues while maintaining ratio
-    const scale = 1.0; // React version can handle a bit more, but let's stick to safe limits
-    const nAg = Math.min(200, Math.round(config.antigenCount * scale));
-    const nAb = Math.min(200, Math.round(config.antibodyCount * scale));
+    const scale = 1.0; 
+    const nAg = Math.round(config.antigenCount * scale);
+    const nAb = Math.round(config.antibodyCount * scale);
     const epCount = config.isHapten ? 1 : config.epitopesPerAntigen;
 
     for(let i=0; i<nAg; i++) {
@@ -129,29 +130,69 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
   const posEp = (ag: Antigen, i: number) => {
     const e = ag.epitopes[i];
     // +3.5 matches the visual offset in draw
+    // Include antigen rotation (ag.angle)
+    const totalAngle = ag.angle + e.ang;
     return { 
-        x: ag.x + Math.cos(e.ang) * (ag.radius + 3.5), 
-        y: ag.y + Math.sin(e.ang) * (ag.radius + 3.5) 
+        x: ag.x + Math.cos(totalAngle) * (ag.radius + 3.5), 
+        y: ag.y + Math.sin(totalAngle) * (ag.radius + 3.5) 
     };
   };
 
   const updatePhysics = (width: number, height: number) => {
     const entities = entitiesRef.current;
-    const jitter = config.temperature > 0 ? 0.6 : 0.18;
-    const maxV = config.temperature > 0 ? 1.3 : 0.8;
+    // Temperature scaling: 0-100
+    // At 0: jitter 0.1, maxV 0.5
+    // At 100: jitter 2.5, maxV 4.0
+    const tempFactor = config.temperature / 100;
+    const jitter = 0.1 + tempFactor * 2.4; 
+    const maxV = 0.5 + tempFactor * 3.5;
+
+    // 0. Pre-calculate cluster forces for coherent movement
+    const clusterForces = new Map<number, {x: number, y: number}>();
+    clusterSizesRef.current.forEach((size, root) => {
+        if (size < 2) return; 
+        
+        // Reduced coherent force scale
+        const scale = (1 / Math.sqrt(size)) * 0.5; 
+        const mag = jitter * scale;
+        
+        clusterForces.set(root, {
+            x: rand(-mag, mag),
+            y: rand(-mag, mag)
+        });
+    });
 
     // 1. Integrate & Wall Bounce
     const margin = 25;
     entities.forEach(p => {
-        p.vx += rand(-jitter, jitter) * 0.1;
-        p.vy += rand(-jitter, jitter) * 0.1;
-        p.vx *= 0.982; p.vy *= 0.982;
+        const root = (p as any).cluster;
+        const isClustered = root !== undefined && root !== -1 && (clusterSizesRef.current.get(root) || 1) >= 2;
 
-        p.vx = clamp(p.vx, -maxV, maxV);
-        p.vy = clamp(p.vy, -maxV, maxV);
+        if (isClustered) {
+            const f = clusterForces.get(root);
+            if (f) {
+                p.vx += f.x;
+                p.vy += f.y;
+            }
+            p.vx += rand(-jitter, jitter) * 0.02;
+            p.vy += rand(-jitter, jitter) * 0.02;
+
+            // Increased drag for clusters to prevent "sliding"
+            p.vx *= 0.9; 
+            p.vy *= 0.9;
+        } else {
+            // Free particle
+            p.vx += rand(-jitter, jitter) * 0.2;
+            p.vy += rand(-jitter, jitter) * 0.2;
+            p.vx *= 0.95; // Slightly more drag for free particles too
+            p.vy *= 0.95;
+        }
+
+        p.vx = clamp(p.vx, -maxV * 2, maxV * 2); 
+        p.vy = clamp(p.vy, -maxV * 2, maxV * 2);
         
         p.x += p.vx; p.y += p.vy;
-        if (p.kind === 'Ab') p.angle += rand(-0.025, 0.025);
+        p.angle += rand(-0.05, 0.05); 
 
         if (p.x < margin || p.x > width - margin) p.vx *= -0.7;
         if (p.y < margin || p.y > height - margin) p.vy *= -0.7;
@@ -243,31 +284,59 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
         });
     });
 
-    // 5. Try Dissociate
-    const kdBase = config.dissociation / 100;
-    if (kdBase > 0) {
-        abs.forEach(ab => {
-            ab.arms.forEach(arm => {
-                if (!arm.bound || !arm.target) return;
-                
-                // Avidity Bonus: If both arms are bound, dissociation is much lower
-                const boundArms = ab.arms.filter(a => a.bound).length;
-                const avidityFactor = boundArms > 1 ? 0.1 : 1.0;
-                
-                if (Math.random() < kdBase * 0.05 * avidityFactor) {
-                    const ag = agMap.get(arm.target.agId);
-                    if (ag) {
-                        const ep = ag.epitopes[arm.target.epIdx];
-                        if (ep) { ep.occ = false; ep.abId = -1; }
-                    }
-                    arm.bound = false;
-                    arm.target = null;
-                }
-            });
-        });
-    }
+    // 5. Try Dissociate (Dynamic based on Zone)
+    // Calculate current ratio (Ab/Ag sites)
+    let totalEp = 0;
+    ags.forEach(ag => totalEp += ag.epitopes.length);
+    const totalSites = abs.length * (config.antibodyType === 'IgG' ? 2 : 10);
+    const ratio = totalEp > 0 ? totalSites / totalEp : 0;
+    
+    // Zone Intensity: Deviation from optimal ratio (log scale)
+    // Optimal is ~1.0 (log10(1) = 0). Prozone > 0, Postzone < 0.
+    const logRatio = Math.abs(Math.log10(ratio || 1e-9));
+    
+    // Base Koff is inverse of Affinity (100 - affinity) scaled
+    // If Affinity is high (100), base Koff is low (0).
+    const baseKoff = (100 - config.affinity) * 0.005; 
+    
+    // Dynamic Penalty: Increases with zone intensity (Quadratic)
+    // We use a "Safe Zone" threshold to decouple Equivalence stability from Zone instability.
+    // Inside the threshold (near ratio 1.0), penalty is 0 (maximum stability).
+    // Outside, it rises sharply.
+    const safeZoneThreshold = 0.15; // Log ratio deviation tolerance (~0.7 to 1.4 ratio)
+    const deviation = Math.max(0, logRatio - safeZoneThreshold);
+    
+    // Steep penalty for deviation beyond the safe zone
+    const zonePenalty = Math.pow(deviation, 2) * 5.0; 
 
-    // 6. Apply Constraints (Inverse Kinematics-ish)
+    // Temperature Factor: Higher temp -> Higher dissociation
+    // At 0°C, factor is 1. At 100°C, factor is 2.5
+    const koffTempFactor = 1 + (config.temperature / 100) * 1.5;
+
+    const effectiveKoff = (baseKoff + zonePenalty) * koffTempFactor;
+
+    abs.forEach(ab => {
+        ab.arms.forEach(arm => {
+            if (!arm.bound || !arm.target) return;
+            
+            // Avidity Bonus: If both arms are bound, dissociation is much lower
+            const boundArms = ab.arms.filter(a => a.bound).length;
+            // High stability for bivalent binding (0.01)
+            const avidityFactor = boundArms > 1 ? 0.01 : 1.0;
+            
+            if (Math.random() < effectiveKoff * avidityFactor) {
+                const ag = agMap.get(arm.target.agId);
+                if (ag) {
+                    const ep = ag.epitopes[arm.target.epIdx];
+                    if (ep) { ep.occ = false; ep.abId = -1; }
+                }
+                arm.bound = false;
+                arm.target = null;
+            }
+        });
+    });
+
+    // 6. Apply Constraints (Relaxed for movement)
     abs.forEach(ab => {
         const binds = ab.arms
             .map((arm, i) => arm.bound && arm.target ? { i, ag: agMap.get(arm.target.agId), ep: arm.target.epIdx } : null)
@@ -275,7 +344,12 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
         
         if (!binds.length) return;
 
-        for(let k=0; k<5; k++) {
+        // Store old positions to maintain momentum
+        const oldAbX = ab.x;
+        const oldAbY = ab.y;
+
+        // Reduced iterations (3) and relaxation factor (0.2) to allow "jiggle"
+        for(let k=0; k<3; k++) {
             let gx=0, gy=0, ga=0;
             for(const b of binds) {
                 const epPos = posEp(b.ag, b.ep);
@@ -288,20 +362,34 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
                 const [ux, uy] = rot(0, -(ab.fcLen + FAB_LENGTH), armAng);
                 ga += dx*ux + dy*uy;
             }
-            const eta = 0.4;
+            const eta = 0.2; // Softer constraint
             ab.x -= eta * gx / binds.length;
             ab.y -= eta * gy / binds.length;
-            ab.angle -= clamp(eta * ga / (binds.length * 80), -0.2, 0.2);
+            ab.angle -= clamp(eta * ga / (binds.length * 80), -0.1, 0.1);
         }
 
-        // Pull Ag toward Ab
+        // Less aggressive velocity damping (was 0.8)
+        // We add the constraint correction to the velocity to conserve momentum
+        // Using 1.0 (or close to it) allows the Brownian kick to persist
+        ab.vx = (ab.vx + (ab.x - oldAbX)) * 0.99;
+        ab.vy = (ab.vy + (ab.y - oldAbY)) * 0.99;
+
+        // Pull Ag toward Ab (Softer pull)
         for(const b of binds) {
+            const oldAgX = b.ag.x;
+            const oldAgY = b.ag.y;
+
             const epPos = posEp(b.ag, b.ep);
             const tipPos = posFab(ab, b.i);
             const dx = tipPos.x - epPos.x;
             const dy = tipPos.y - epPos.y;
-            b.ag.x += dx * 0.08;
-            b.ag.y += dy * 0.08;
+            
+            b.ag.x += dx * 0.05; 
+            b.ag.y += dy * 0.05;
+
+            // Update Ag velocity
+            b.ag.vx = (b.ag.vx + (b.ag.x - oldAgX)) * 0.99;
+            b.ag.vy = (b.ag.vy + (b.ag.y - oldAgY)) * 0.99;
         }
     });
   };
@@ -356,10 +444,26 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
         clusterSizesRef.current.set(root, (clusterSizesRef.current.get(root) || 0) + 1);
     });
 
+    const precipThreshold = Math.max(5, Math.floor(ags.length * 0.1));
+
     ags.forEach(ag => {
         const root = clusterMapRef.current.get(ag.id)!;
         ag.cluster = root;
-        ag.precipitated = (clusterSizesRef.current.get(root) || 1) >= 4;
+        ag.precipitated = (clusterSizesRef.current.get(root) || 1) >= precipThreshold;
+    });
+
+    abs.forEach(ab => {
+        const agIds = [...new Set(ab.arms.filter(f => f.bound && f.target).map(f => f.target!.agId))];
+        if (agIds.length > 0) {
+            const root = clusterMapRef.current.get(agIds[0]);
+            if (root !== undefined) {
+                ab.cluster = root;
+                ab.precipitated = (clusterSizesRef.current.get(root) || 1) >= precipThreshold;
+            }
+        } else {
+            ab.cluster = -1;
+            ab.precipitated = false;
+        }
     });
   };
 
@@ -383,12 +487,14 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
     });
 
     let numClusters = 0, maxClust = 0, precipAg = 0;
+    const precipThreshold = Math.max(5, Math.floor(ags.length * 0.1));
+
     clusterSizesRef.current.forEach(size => {
         if (size >= 2) {
             numClusters++;
             maxClust = Math.max(maxClust, size);
         }
-        if (size >= 5) precipAg += size;
+        if (size >= precipThreshold) precipAg += size;
     });
 
     const precipScore = ags.length > 0 ? (precipAg / ags.length) * 100 : 0;
@@ -434,9 +540,11 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
         });
 
         let ci = 0;
+        const precipThreshold = Math.max(5, Math.floor(ags.length * 0.1));
+        
         clGroups.forEach((group, root) => {
             if (group.length < 2) return;
-            const isPrecip = group.length >= 3;
+            const isPrecip = group.length >= precipThreshold;
 
             let cx = 0, cy = 0;
             group.forEach(ag => { cx += ag.x; cy += ag.y; });
@@ -506,6 +614,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
     ags.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle); // Apply rotation
         
         ctx.beginPath();
         ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
@@ -650,15 +759,15 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ config, isRunning, 
        <div className="absolute bottom-4 left-4 bg-slate-800/80 backdrop-blur p-3 rounded-lg border border-slate-700 text-xs text-slate-300 pointer-events-none">
           <div className="flex items-center gap-2 mb-1">
              <div className="w-3 h-3 rounded-full bg-red-500 border border-red-700"></div>
-             <span>Antigen</span>
+             <span>Antígeno</span>
           </div>
           <div className="flex items-center gap-2 mb-1">
              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-             <span>Antibody ({config.antibodyType})</span>
+             <span>Anticorpo ({config.antibodyType})</span>
           </div>
           <div className="flex items-center gap-2 mb-1">
              <div className="w-8 h-4 bg-red-500/10 border border-red-500/30 rounded border-dashed"></div>
-             <span>Lattice (Precipitate)</span>
+             <span>Rede (Precipitado)</span>
           </div>
        </div>
     </div>

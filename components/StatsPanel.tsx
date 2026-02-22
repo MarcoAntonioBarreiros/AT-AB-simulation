@@ -28,16 +28,23 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
   if (stats.zone === 'Prozone') zoneColor = '#ef4444'; 
   if (stats.zone === 'Post-zone') zoneColor = '#f59e0b';
 
+  const getZoneLabel = (zone: string) => {
+    if (zone === 'Prozone') return 'Prozona';
+    if (zone === 'Post-zone') return 'Pós-zona';
+    if (zone === 'Equivalence') return 'Equivalência';
+    return zone;
+  };
+
   return (
     <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 backdrop-blur-sm">
       <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest mb-4 flex items-center justify-between">
-        <span>Heidelberger Curve</span>
+        <span>Curva de Heidelberger</span>
         <span className={`text-xs px-2 py-1 rounded-full border ${
            stats.zone === 'Equivalence' 
              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' 
              : 'border-amber-500/30 bg-amber-500/10 text-amber-400'
         }`} style={{ color: zoneColor, borderColor: zoneColor }}>
-           {stats.zone}
+           {getZoneLabel(stats.zone)}
         </span>
       </h3>
       
@@ -64,7 +71,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
                  contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
                  itemStyle={{ color: '#94a3b8' }}
                  labelFormatter={() => ''}
-                 formatter={(value: any) => [value, 'Theoretical Precip.']}
+                 formatter={(value: any) => [value, 'Precip. Teórica']}
                />
                <Area 
                  type="monotone" 
@@ -86,18 +93,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-center">
-         <StatBox label="Ratio (Ab/Ag)" value={stats.ratio.toFixed(2)} color="text-slate-200" />
-         <StatBox label="Precipitation" value={Math.round(stats.precipitation) + '%'} color="text-emerald-400" />
-         <StatBox label="Max Cluster" value={stats.maxCluster} color="text-blue-400" />
-         <StatBox label="Bridges" value={stats.bridges} color="text-cyan-400" />
-         <StatBox label="Ep. Occupancy" value={Math.round(stats.epitopeOccupancy) + '%'} color="text-amber-400" />
-         <StatBox label="Avg Complex" value={stats.complexSize.toFixed(1)} color="text-purple-400" />
+         <StatBox label="Razão (Ac/Ag)" value={stats.ratio.toFixed(2)} color="text-slate-200" />
+         <StatBox label="Precipitação" value={Math.round(stats.precipitation) + '%'} color="text-emerald-400" />
+         <StatBox label="Maior Cluster" value={stats.maxCluster} color="text-blue-400" />
+         <StatBox label="Pontes" value={stats.bridges} color="text-cyan-400" />
+         <StatBox label="Ocupação Ep." value={Math.round(stats.epitopeOccupancy) + '%'} color="text-amber-400" />
+         <StatBox label="Complexo Médio" value={stats.complexSize.toFixed(1)} color="text-purple-400" />
       </div>
       
       <div className="mt-4 text-xs text-slate-500 text-center leading-relaxed border-t border-slate-700/50 pt-4">
-         {stats.zone === 'Prozone' && "Antibody Excess: High occupancy but few bridges. Antibodies saturate epitopes individually."}
-         {stats.zone === 'Post-zone' && "Antigen Excess: Not enough antibodies to bridge antigens together. Small soluble complexes."}
-         {stats.zone === 'Equivalence' && "Equivalence: Optimal ratio allows formation of large, insoluble cross-linked lattices."}
+         {stats.zone === 'Prozone' && "Excesso de Anticorpo: Alta ocupação, mas poucas pontes. Anticorpos saturam epítopos individualmente."}
+         {stats.zone === 'Post-zone' && "Excesso de Antígeno: Anticorpos insuficientes para unir antígenos. Pequenos complexos solúveis."}
+         {stats.zone === 'Equivalence' && "Equivalência: Razão ótima permite formação de grandes redes reticuladas insolúveis."}
+      </div>
+      <div className="mt-2 text-[10px] text-slate-600 text-center italic">
+        *Razão calculada com base nos sítios de ligação totais (Paratópos / Epítopos)
       </div>
     </div>
   );

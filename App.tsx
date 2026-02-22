@@ -41,11 +41,11 @@ const App: React.FC = () => {
             </div>
             <div>
                <h1 className="text-xl font-bold tracking-tight text-white">ImmunoSim</h1>
-               <p className="text-xs text-slate-400">Antigen-Antibody Interaction & Precipitation</p>
+               <p className="text-xs text-slate-400">Interação Antígeno-Anticorpo e Precipitação</p>
             </div>
          </div>
          <div className="text-xs text-slate-500 hidden md:block">
-            v2.0 • React • TypeScript • Physics Engine
+            v2.0 • React • TypeScript • Motor de Física
          </div>
       </header>
 

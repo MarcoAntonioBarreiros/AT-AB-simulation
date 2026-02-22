@@ -51,12 +51,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, setConfig, isRunnin
              : 'bg-emerald-500 text-slate-900 hover:bg-emerald-400'
            }`}
          >
-           {isRunning ? <><Pause size={18} /> Pause</> : <><Play size={18} /> Start</>}
+           {isRunning ? <><Pause size={18} /> Pausar</> : <><Play size={18} /> Iniciar</>}
          </button>
          <button 
            onClick={reset}
            className="px-4 py-3 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition-colors"
-           title="Reset Simulation"
+           title="Reiniciar Simulação"
          >
            <RefreshCw size={18} />
          </button>
@@ -65,16 +65,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, setConfig, isRunnin
       <div className="space-y-6">
         {/* Presets */}
         <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => applyPreset('equivalence')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">⚖️ Equivalence</button>
-            <button onClick={() => applyPreset('prozone')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">🔴 Prozone (Excess Ab)</button>
-            <button onClick={() => applyPreset('postzone')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">🟡 Post-zone (Excess Ag)</button>
-            <button onClick={() => applyPreset('igm')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">🌟 IgM Agglutination</button>
-            <button onClick={() => applyPreset('hapten')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">💊 Hapten (Monovalent)</button>
+            <button onClick={() => applyPreset('equivalence')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">⚖️ Equivalência</button>
+            <button onClick={() => applyPreset('prozone')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">🔴 Prozona (Excesso Ac)</button>
+            <button onClick={() => applyPreset('postzone')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">🟡 Pós-zona (Excesso Ag)</button>
+            <button onClick={() => applyPreset('igm')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">🌟 Aglutinação IgM</button>
+            <button onClick={() => applyPreset('hapten')} className="px-2 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 rounded text-slate-300 border border-slate-600">💊 Hapteno (Monovalente)</button>
         </div>
 
         {/* Antibody Type */}
         <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
-           <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Antibody Structure</label>
+           <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Estrutura do Anticorpo</label>
            <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
               {(['IgG', 'IgM'] as AntibodyType[]).map((type) => (
                 <button
@@ -95,32 +95,32 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, setConfig, isRunnin
         {/* Sliders */}
         <div className="space-y-6">
            <ControlSlider 
-             label="Antigen Concentration" 
+             label="Concentração de Antígeno" 
              value={config.antigenCount} 
-             min={5} max={200} 
+             min={5} max={300} 
              onChange={(v) => handleChange('antigenCount', v)} 
-             unit="units"
+             unit="unidades"
            />
            <ControlSlider 
-             label="Antibody Concentration" 
+             label="Concentração de Anticorpo" 
              value={config.antibodyCount} 
-             min={5} max={200} 
+             min={5} max={500} 
              onChange={(v) => handleChange('antibodyCount', v)} 
-             unit="units"
+             unit="unidades"
            />
            <ControlSlider 
-             label="Epitopes per Antigen" 
+             label="Epítopos por Antígeno" 
              value={config.isHapten ? 1 : config.epitopesPerAntigen} 
              min={1} max={12} 
              onChange={(v) => handleChange('epitopesPerAntigen', v)} 
-             unit={config.isHapten ? "hapten" : "sites"}
+             unit={config.isHapten ? "hapteno" : "sítios"}
              disabled={config.isHapten}
            />
            
            <div className="h-px bg-slate-700 my-2"></div>
 
            <ControlSlider 
-             label="Affinity (Kon)" 
+             label="Afinidade (Força de Ligação)" 
              value={config.affinity} 
              min={5} max={100} 
              onChange={(v) => handleChange('affinity', v)} 
@@ -128,18 +128,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, setConfig, isRunnin
              color="accent-cyan-500"
              textColor="text-cyan-400"
            />
-           <ControlSlider 
-             label="Dissociation (Koff)" 
-             value={config.dissociation} 
-             min={0} max={50} 
-             onChange={(v) => handleChange('dissociation', v)} 
-             unit="%"
-             color="accent-purple-500"
-             textColor="text-purple-400"
-           />
+           {/* Dissociation is now dynamic based on zone */}
 
            <ControlSlider 
-             label="Temperature" 
+             label="Temperatura" 
              value={config.temperature} 
              min={0} max={100} 
              onChange={(v) => handleChange('temperature', v)} 
@@ -149,10 +141,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, setConfig, isRunnin
 
         {/* Toggles */}
         <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-700/50">
-           <Toggle label="Show Lattice" checked={config.showLinks} onChange={(v) => handleChange('showLinks', v)} />
-           <Toggle label="Hapten Mode" checked={config.isHapten} onChange={(v) => handleChange('isHapten', v)} />
+           <Toggle label="Mostrar Rede" checked={config.showLinks} onChange={(v) => handleChange('showLinks', v)} />
+           <Toggle label="Modo Hapteno" checked={config.isHapten} onChange={(v) => handleChange('isHapten', v)} />
            <div className="col-span-2 flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-300">Antigen Size</label>
+              <label className="text-xs font-medium text-slate-300">Tamanho do Antígeno</label>
               <div className="flex bg-slate-700 rounded-lg p-0.5 border border-slate-600">
                   <button 
                     onClick={() => handleChange('antigenRadius', 18)}

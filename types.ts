@@ -42,6 +42,8 @@ export interface Antibody extends Particle {
   abType: AntibodyType;
   fcLen: number;
   arms: Arm[];
+  precipitated?: boolean;
+  cluster?: number;
 }
 
 export type Entity = Antigen | Antibody;
