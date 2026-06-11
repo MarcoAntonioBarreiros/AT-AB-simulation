@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioSimuladores — Biologia Molecular</title>
+<style>
+  :root{--bg:#0e0b08;--card:#f5ecd8;--ink:#2a1f14;--muted:#5d4933;--accent:#b8893f;--line:#d1b27d;}
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 10%,rgba(217,189,146,.16),transparent 35%),var(--bg);font-family:Georgia,serif;color:var(--ink);padding:28px;display:flex;align-items:center;justify-content:center}
+  main{width:min(960px,100%);background:linear-gradient(135deg,#d6b37d,#b89058);border-radius:14px;padding:34px;box-shadow:0 24px 70px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25)}
+  h1{margin:0 0 8px;font-size:clamp(28px,4vw,46px)} p{font-size:18px;color:var(--muted);line-height:1.5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:24px}a.card{display:block;background:rgba(245,236,216,.75);border:1px solid var(--line);border-radius:12px;padding:18px;text-decoration:none;color:var(--ink);transition:.15s}a.card:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(0,0,0,.22)}.card strong{display:block;font-size:20px;margin-bottom:8px}.card span{color:var(--muted);line-height:1.35}.note{margin-top:24px;font-size:14px;border-top:1px solid rgba(80,60,34,.25);padding-top:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>BioSimuladores</h1>
+  <p>Páginas interativas de Biologia Molecular hospedadas para incorporação em apresentações Gamma.</p>
+  <section class="grid">
+    <a class="card" href="ligacao-fosfodiester.html"><strong>Ligação fosfodiéster</strong><span>Assimetria 5′–3′ da fita de DNA.</span></a>
+    <a class="card" href="forquilha-replicacao.html"><strong>Forquilha de replicação</strong><span>Helicase, topoisomerase, primase, polimerase e ligase.</span></a>
+    <a class="card" href="desnaturacao-anelamento.html"><strong>Desnaturação e anelamento</strong><span>Temperatura, pontes de H e corrida do primer.</span></a>
+    <a class="card" href="sintese-dna.html"><strong>Síntese de DNA</strong><span>Primer, dNTPs, PPi e extensão 5′→3′.</span></a>
+  </section>
+  <p class="note">Para usar no Gamma, incorpore a URL da página desejada como página/web embed.</p>
+</main>
+</body>
+</html>
