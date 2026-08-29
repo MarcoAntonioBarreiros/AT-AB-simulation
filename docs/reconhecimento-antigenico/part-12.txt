@@ -1,0 +1,107 @@
+  nuvem.forEach(n=>{
+            const cx=x+n.dx, cy=(n.dy>0? y1+n.dy : y2+n.dy);
+            g.appendChild(svgEl("circle",{cx:cx,cy:cy,r:7,fill:n.c,opacity:.42}));
+            const t=svgEl("text",{x:cx,y:cy+3.6,"text-anchor":"middle","font-size":9,
+              "font-weight":700,fill:"#0B1220",opacity:.9}); t.textContent=n.s;
+            g.appendChild(t);
+          });
+          // O escudo: a região onde a carga deixa de ser "sentida" do outro lado.
+          g.appendChild(svgEl("ellipse",{cx:x,cy:y1+16,rx:26,ry:20,fill:"none",
+            stroke:"#9FB2C9","stroke-width":1.3,"stroke-dasharray":"3 4",opacity:.6}));
+          g.appendChild(svgEl("ellipse",{cx:x,cy:y2-16,rx:26,ry:20,fill:"none",
+            stroke:"#9FB2C9","stroke-width":1.3,"stroke-dasharray":"3 4",opacity:.6}));
+          const rot=svgEl("text",{x:x,y:(y1+y2)/2+4,"text-anchor":"middle","font-size":9.5,
+            fill:"#9FB2C9"}); rot.textContent="carga blindada";
+          g.appendChild(rot);
+        });
+        // as demais interações seguem intactas — é esse contraste que o texto afirma
+        const nota=svgEl("text",{x:360,y:62,"text-anchor":"middle","font-size":10,fill:"#8FA2BA"});
+        nota.textContent="íons do meio cercam cada carga; as interações não eletrostáticas continuam ativas";
+        g.appendChild(nota);
+      }
+      // causa visual da perturbação no meio / distância
+      if(env&&mode==="salt"){
+        [[92,58,"+","#60a5fa"],[118,72,"−","#ff6b6b"],[618,58,"−","#ff6b6b"],[642,75,"+","#60a5fa"],[104,308,"−","#ff6b6b"],[628,305,"+","#60a5fa"]].forEach(v=>{env.appendChild(svgEl("circle",{cx:v[0],cy:v[1],r:8,fill:v[3],opacity:.55}));const t=svgEl("text",{x:v[0],y:v[1]+3.5,"text-anchor":"middle",fill:"#07111f","font-size":9,"font-weight":900});t.textContent=v[2];env.appendChild(t);});
+        const t=svgEl("text",{x:360,y:48,"text-anchor":"middle",fill:"#9fb2c9","font-size":9.5,"font-weight":800});t.textContent="mais íons no solvente → blindagem eletrostática";env.appendChild(t);
+      }
+      if(env&&mode==="distance"){
+        const yA=topY(360)+10,yB=botY(360)-10;
+        env.appendChild(svgEl("line",{x1:680,y1:yA,x2:680,y2:yB,stroke:"#7dd3fc","stroke-width":1.6,"stroke-dasharray":"4 4"}));
+        env.appendChild(svgEl("path",{d:`M674 ${yA+8} L680 ${yA} L686 ${yA+8} M674 ${yB-8} L680 ${yB} L686 ${yB-8}`,fill:"none",stroke:"#7dd3fc","stroke-width":1.6}));
+        const tx=svgEl("text",{x:666,y:(yA+yB)/2,"text-anchor":"end",fill:"#7dd3fc","font-size":10,"font-weight":800});tx.textContent="+0,3 nm = +3 Å";env.appendChild(tx);
+      }
+      if(env&&mode==="detergent"){
+        // detergente não iônico: cabeça hidrofílica + cauda apolar visíveis no meio
+        const hydroIdx=bonds.map((it,i)=>it&&it.type==="hydro"?i:-1).filter(i=>i>=0);
+        const centers=hydroIdx.length?hydroIdx.map(i=>XS[i]):[300,420];
+        centers.forEach(x=>{const ym=(topY(x)+botY(x))/2;[-20,20].forEach(dx=>{env.appendChild(svgEl("circle",{cx:x+dx,cy:ym-8,r:7,fill:"#7dd3fc",opacity:.78}));env.appendChild(svgEl("line",{x1:x+dx,y1:ym-1,x2:x+dx+10*(dx<0?-1:1),y2:ym+19,stroke:"#f6ad55","stroke-width":3,"stroke-linecap":"round",opacity:.85}));});});
+        const t=svgEl("text",{x:360,y:58,"text-anchor":"middle",fill:"#8fb7d6","font-size":9.5,"font-weight":800});t.textContent="detergente: cabeça hidrofílica + cauda apolar alteram o ambiente hidrofóbico";env.appendChild(t);
+      }
+      if(env&&mode==="unfold"){
+        const t=svgEl("text",{x:360,y:60,"text-anchor":"middle",fill:"#fb7185","font-size":10,"font-weight":850});t.textContent="a superfície superior mudou de forma → os pontos deixaram de coincidir";env.appendChild(t);
+      }
+      if(env&&mode==="mutation"){
+        const x=XS[3],y=topY(x);env.appendChild(svgEl("circle",{cx:x,cy:y,r:13,fill:"none",stroke:"#fb7185","stroke-width":2.4}));const t=svgEl("text",{x:x,y:y-18,"text-anchor":"middle",fill:"#fb7185","font-size":9,"font-weight":850});t.textContent="resíduo trocado";env.appendChild(t);
+      }
+
+      document.getElementById("networkCaption").textContent =
+        mode==="base"?"interface íntegra — superfícies complementares":
+        mode==="salt"?"interações eletrostáticas blindadas; o resto da rede permanece":
+        mode==="distance"?"superfícies afastadas: os vãos aumentam e van der Waals colapsa":
+        mode==="detergent"?"contatos apolares perturbados; cargas e pontes de H seguem":
+        mode==="unfold"?"a dobra mudou: os contatos deixam de se alinhar":
+        "um contato local tornou-se desfavorável";
+    }
+const TEST_TEXT={salt:"<strong>Força iônica alta:</strong> a blindagem de cargas reduz a contribuição eletrostática. O complexo pode ainda permanecer se outras interações distribuídas pela interface forem suficientes.",distance:"<strong>Separação mínima:</strong> forças de van der Waals dependem fortemente da distância. Afastar superfícies ajustadas elimina muitas microcontribuições simultaneamente — uma forma direta de perceber por que o encaixe geométrico importa.",detergent:"<strong>Detergente:</strong> o ambiente de regiões apolares é perturbado. Isso reduz a contribuição do efeito hidrofóbico e pode enfraquecer a interface sem abolir todas as outras forças.",unfold:"<strong>Perda de conformação:</strong> se o epítopo é conformacional, alterar a dobra muda a geometria da superfície. Mesmo aminoácidos quimicamente adequados deixam de ocupar as posições certas.",mutation:"<strong>Mutação local:</strong> trocar um único resíduo pode remover uma interação favorável ou criar repulsão. Se esse contato for importante, a afinidade cai — mesmo sem destruir toda a molécula antigênica."};document.getElementById("tests").addEventListener("click",e=>{const b=e.target.closest(".test");if(!b)return;document.querySelectorAll(".test").forEach(x=>x.classList.remove("ran"));b.classList.add("ran");const k=b.dataset.test;state.tests[k]=true;buildTestNetwork(k);document.getElementById("testResult").innerHTML=TEST_TEXT[k];checkReport()});buildTestNetwork();
+
+document.getElementById("go5").addEventListener("click",()=>goto(5));
+const AFF_CASES={
+ shapePoor:{value:40,title:"Afinidade baixa a moderada",text:"A química dos poucos pontos de contato é favorável, mas a geometria reduz a área de contato e o número de interações simultâneas.",lesson:"Química boa não corrige completamente uma geometria ruim."},
+ chemPoor:{value:28,title:"Afinidade baixa",text:"A forma aproxima bem as superfícies, mas alguns grupos próximos se repelem ou não estabelecem interações favoráveis.",lesson:"Forma boa é necessária, mas não suficiente."},
+ bothGood:{value:90,title:"Afinidade alta",text:"A geometria aproxima uma grande área de superfície e a química local é compatível, permitindo a soma de diversas interações fracas.",lesson:"Alta afinidade emerge da complementaridade global."}
+};
+document.getElementById("compareGrid").addEventListener("click",e=>{
+ const c=e.target.closest(".compare-card");if(!c)return;
+ document.querySelectorAll(".compare-card").forEach(x=>x.classList.remove("active"));c.classList.add("active");
+ const d=AFF_CASES[c.dataset.case];document.getElementById("affValue").style.cssText="";document.getElementById("affValue").textContent=d.value+"%";document.getElementById("affFill").style.width=d.value+"%";
+ document.getElementById("affinityReadout").innerHTML=`<h3>${d.title}</h3><p>${d.text}</p><p><strong>${d.lesson}</strong></p>`;
+});
+function renderAvidity(mode){
+ const A=document.getElementById("antigenDots"),B=document.getElementById("antibodyArms"),L=document.getElementById("avidLinks"),C=document.getElementById("avidCaption"),R=document.getElementById("avidityReadout");
+ A.innerHTML=B.innerHTML=L.innerHTML="";
+ if(mode==="2"){
+   [145,275].forEach(x=>A.insertAdjacentHTML("beforeend",`<circle cx="${x}" cy="62" r="22" fill="#263952" stroke="#f6ad55" stroke-width="4"/>`));
+   B.innerHTML='<path d="M210 145L150 90M210 145L270 90M210 145V178" stroke="#7c8cff" stroke-width="12" stroke-linecap="round"/>';
+   L.innerHTML='<line x1="150" y1="86" x2="145" y2="83" stroke="#34d399" stroke-width="5"/><line x1="270" y1="86" x2="275" y2="83" stroke="#34d399" stroke-width="5"/>';
+   C.textContent="2 ligações simultâneas";R.innerHTML="<h3>Avidez maior por bivalência</h3><p>A afinidade de cada braço é a mesma do contato monovalente, mas duas ligações simultâneas reduzem a chance de separação completa.</p>";
+ }else if(mode==="5"){
+   const xs=[80,145,210,275,340];xs.forEach(x=>A.insertAdjacentHTML("beforeend",`<circle cx="${x}" cy="60" r="15" fill="#263952" stroke="#f6ad55" stroke-width="3"/>`));
+   B.innerHTML='<circle cx="210" cy="151" r="17" fill="#7c8cff"/>'+xs.map(x=>`<line x1="210" y1="145" x2="${x}" y2="86" stroke="#7c8cff" stroke-width="8" stroke-linecap="round"/>`).join("");
+   L.innerHTML=xs.map(x=>`<line x1="${x}" y1="76" x2="${x}" y2="88" stroke="#34d399" stroke-width="4"/>`).join("");
+   C.textContent="múltiplas ligações simultâneas";R.innerHTML="<h3>Avidez muito elevada por multivalência</h3><p>Muitos contatos podem manter o complexo unido mesmo que cada interação individual tenha apenas afinidade moderada.</p>";
+ }else{
+   [90,330].forEach(x=>A.insertAdjacentHTML("beforeend",`<circle cx="${x}" cy="60" r="20" fill="#263952" stroke="#f6ad55" stroke-width="4"/>`));
+   B.innerHTML='<path d="M210 145L160 90M210 145L260 90M210 145V178" stroke="#7c8cff" stroke-width="12" stroke-linecap="round"/>';
+   L.innerHTML='<line x1="160" y1="86" x2="90" y2="82" stroke="#34d399" stroke-width="5" opacity=".45"/>';
+   C.textContent="valência existe, mas a geometria impede simultaneidade";R.innerHTML="<h3>Valência sozinha não garante alta avidez</h3><p>Se os epítopos estiverem mal espaçados ou orientados, múltiplos braços não conseguem ligar ao mesmo tempo. A geometria do conjunto também importa.</p>";
+ }
+}
+document.querySelectorAll(".avid-btn").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".avid-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderAvidity(b.dataset.valency)}));
+renderAvidity("2");
+
+
+/* ---------- stage 6: peptide folding (v13) ----------------------------
+   Motor: dinâmica baseada em posições (PBD) + recozimento simulado.
+   Diferença essencial em relação a um "relaxamento" simples: a cadeia é
+   aquecida e resfriada, de modo que ela ESCAPA do mínimo local em que
+   estava e procura outro. É isso que faz a FORMA mudar após uma mutação,
+   e não apenas a posição de um resíduo.
+   --------------------------------------------------------------------- */
+
+/* burial = tendência ao enterramento (escala de transferência octanol/água,
+            normalizada em [-1,1]). r = raio efetivo da cadeia lateral.
+   q = carga em pH 7.  hb = capaz de fazer ligação de hidrogênio. */
+const FOLD_AA={
+ A:{one:"A",three:"Ala",name:"alanina",      cls:"hydro",burial:.18,r: 8.0,q:0, hb:0,color:"#f6ad55"},
+ V:{one:"V",three:"Val",name:"valina",       cls:"hydro",burial:.48,r: 9.8,q:0, hb:0,color:"#f6ad55"},
+ L:{one:"L",three:"Leu",name:"leucina",     
