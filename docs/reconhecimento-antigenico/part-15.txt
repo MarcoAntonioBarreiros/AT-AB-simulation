@@ -1,0 +1,212 @@
+0,foldViewT.cy-160,0,foldViewT.cy+160);
+  g.addColorStop(0,"rgba(90,167,255,.13)");g.addColorStop(1,"rgba(124,78,209,.13)");
+  c.fillStyle=g;foldUnionPath(c,nodes,radii,0);c.fill();
+  foldStrokeContour(c,foldContour(nodes,radii),2.6,"rgba(147,197,253,.92)",0);
+  c.restore();
+ }
+
+ c.save();foldApplyView(c);
+
+ /* ---- núcleo hidrofóbico efetivo ---- */
+ foldCoreLabel=null;foldMutLabel=null;
+ if(foldShow.core&&foldAcc.length===n){
+  const idx=[];for(let i=0;i<n;i++)if(S.bur[i]>.3&&foldAcc[i]<.28)idx.push(i);
+  if(idx.length){
+   const pts=idx.map(i=>nodes[i]),rr=idx.map(i=>S.rad[i]+6);
+   c.fillStyle="rgba(246,173,85,.20)";foldUnionPath(c,pts,rr,0);c.fill();
+   foldStrokeContour(c,foldContour(pts,rr),2,"rgba(246,173,85,.85)",0);
+   foldCoreLabel=foldCentroid(pts);
+  }
+ }
+
+ /* ---- esqueleto peptídico ---- */
+ c.lineCap="round";c.lineJoin="round";
+ c.strokeStyle="rgba(148,163,184,.85)";c.lineWidth=5.5/z;
+ c.beginPath();for(let i=0;i<n;i++)i?c.lineTo(nodes[i].x,nodes[i].y):c.moveTo(nodes[i].x,nodes[i].y);c.stroke();
+ c.strokeStyle="rgba(15,26,44,.9)";c.lineWidth=2/z;
+ c.beginPath();for(let i=0;i<n;i++)i?c.lineTo(nodes[i].x,nodes[i].y):c.moveTo(nodes[i].x,nodes[i].y);c.stroke();
+
+ /* ---- resíduos ---- */
+ for(let i=0;i<n;i++){
+  const p=nodes[i],aa=FA(S.seq[i]),acc=foldAcc[i]!==undefined?foldAcc[i]:.5,
+        exposed=acc>.34,sel=i===foldSelected;
+  if(foldLastMut&&foldLastMut.pos===i){
+   c.strokeStyle="#f6bd4a";c.lineWidth=3.2/z;c.setLineDash([]);
+   c.beginPath();c.arc(p.x,p.y,aa.r+4.5,0,Math.PI*2);c.stroke();
+   foldMutLabel={x:p.x,y:p.y+aa.r+13/z,
+    text:(foldLastMut.pos+1)+": "+FA(foldLastMut.from).three+" → "+FA(foldLastMut.to).three};}
+  if(sel){c.strokeStyle="#e9d5ff";c.lineWidth=2.6/z;
+   c.beginPath();c.arc(p.x,p.y,aa.r+8.5,0,Math.PI*2);c.stroke();}
+  c.fillStyle=aa.color;c.beginPath();c.arc(p.x,p.y,aa.r,0,Math.PI*2);c.fill();
+  c.strokeStyle=exposed?"rgba(186,230,253,.95)":"rgba(8,17,31,.95)";
+  c.lineWidth=(exposed?2.6:3)/z;c.stroke();
+  c.fillStyle="#07111f";c.font="900 "+(aa.r*.98).toFixed(1)+"px system-ui";
+  c.textAlign="center";c.textBaseline="middle";c.fillText(aa.one,p.x,p.y+.5);
+  if(foldShow.labels){c.fillStyle="rgba(226,232,240,.85)";
+   c.font="800 "+(8.5/z).toFixed(1)+"px system-ui";c.fillText(String(i+1),p.x,p.y-aa.r-7/z);}
+  c.textAlign="left";c.textBaseline="alphabetic";
+ }
+ /* extremidades N e C */
+ c.textAlign="center";c.textBaseline="middle";
+ for(const [idx,tag] of [[0,"N"],[n-1,"C"]]){
+  const p=nodes[idx],r=6.5/z,ox=0,oy=-(S.rad[idx]+9/z);
+  c.fillStyle="rgba(8,17,31,.92)";c.beginPath();c.arc(p.x+ox,p.y+oy,r,0,Math.PI*2);c.fill();
+  c.strokeStyle="rgba(226,232,240,.75)";c.lineWidth=1.4/z;c.stroke();
+  c.fillStyle="rgba(226,232,240,.98)";c.font="900 "+(8.5/z).toFixed(1)+"px system-ui";
+  c.fillText(tag,p.x+ox,p.y+oy+.3/z);}
+ c.textBaseline="alphabetic";
+ /* ---- setas de deslocamento: de onde cada resíduo veio ---- */
+ if(foldShow.shift&&foldAligned&&foldAligned.length===n&&foldPhase==="idle"){
+  c.strokeStyle="rgba(216,180,254,.9)";c.fillStyle="rgba(216,180,254,.95)";
+  c.lineWidth=2/z;c.setLineDash([]);
+  const moved=[];
+  for(let i=0;i<n;i++){const a=foldAligned[i],b=nodes[i];
+   moved.push([Math.hypot(b.x-a.x,b.y-a.y),i]);}
+  moved.sort((x,y)=>y[0]-x[0]);
+  const top=moved.slice(0,6).filter(m=>m[0]>=10).map(m=>m[1]);
+  for(const i of top){
+   const a=foldAligned[i],b=nodes[i],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+   const ux=dx/d,uy=dy/d,ex=b.x-ux*(S.rad[i]+2),ey=b.y-uy*(S.rad[i]+2);
+   c.beginPath();c.moveTo(a.x,a.y);c.lineTo(ex,ey);c.stroke();
+   c.beginPath();c.arc(a.x,a.y,2.6/z,0,Math.PI*2);c.fill();
+   const h=5/z;
+   c.beginPath();c.moveTo(ex,ey);
+   c.lineTo(ex-ux*h*1.8-uy*h,ey-uy*h*1.8+ux*h);
+   c.lineTo(ex-ux*h*1.8+uy*h,ey-uy*h*1.8-ux*h);c.closePath();c.fill();
+  }
+ }
+
+ /* ---- pontes dissulfeto ---- */
+ for(const [i,j] of S.ss){
+  const a=nodes[i],b=nodes[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,
+        nx=-dy/d*2.6,ny=dx/d*2.6;
+  c.strokeStyle="#facc15";c.lineWidth=2.4/z;
+  c.beginPath();c.moveTo(a.x+nx,a.y+ny);c.lineTo(b.x+nx,b.y+ny);
+  c.moveTo(a.x-nx,a.y-ny);c.lineTo(b.x-nx,b.y-ny);c.stroke();
+  c.fillStyle="#fde68a";c.font="900 "+(9.5/z).toFixed(1)+"px system-ui";c.textAlign="center";
+  c.fillText("S–S",(a.x+b.x)/2,(a.y+b.y)/2-8/z);c.textAlign="left";
+ }
+
+ c.textAlign="left";
+ /* rótulo do núcleo por cima dos resíduos */
+ const tag=(L,text,fg,bg)=>{
+  c.font="900 "+(9.5/z).toFixed(1)+"px system-ui";c.textAlign="center";c.textBaseline="middle";
+  const w=c.measureText(text).width;
+  c.fillStyle=bg;c.beginPath();
+  if(c.roundRect)c.roundRect(L.x-w/2-6/z,L.y-8/z,w+12/z,16/z,5/z);
+  else c.rect(L.x-w/2-6/z,L.y-8/z,w+12/z,16/z);
+  c.fill();
+  c.fillStyle=fg;c.fillText(text,L.x,L.y);
+  c.textAlign="left";c.textBaseline="alphabetic";};
+ if(foldCoreLabel&&foldMutLabel&&Math.abs(foldCoreLabel.x-foldMutLabel.x)<90&&
+    Math.abs(foldCoreLabel.y-foldMutLabel.y)<20/z) foldMutLabel.y+=22/z;
+ if(foldCoreLabel)tag(foldCoreLabel,"NÚCLEO HIDROFÓBICO","rgba(253,208,138,.98)","rgba(28,16,4,.88)");
+ if(foldMutLabel)tag(foldMutLabel,foldMutLabel.text,"rgba(255,231,170,1)","rgba(133,79,8,.95)");
+ c.restore();
+
+ /* ---- barra de escala (mostra que o enquadramento mudou) ---- */
+ const barModel=50,barPx=barModel*z;
+ c.strokeStyle="rgba(159,176,200,.55)";c.lineWidth=1.6;
+ c.beginPath();c.moveTo(FP.W-30-barPx,FP.H-26);c.lineTo(FP.W-30,FP.H-26);
+ c.moveTo(FP.W-30-barPx,FP.H-31);c.lineTo(FP.W-30-barPx,FP.H-21);
+ c.moveTo(FP.W-30,FP.H-31);c.lineTo(FP.W-30,FP.H-21);c.stroke();
+ c.fillStyle="rgba(159,176,200,.75)";c.font="800 9px system-ui";c.textAlign="center";
+ c.fillText("50 u.a.",FP.W-30-barPx/2,FP.H-34);c.textAlign="left";
+}
+
+/* =====================================================================
+   MÉTRICAS E PAINEL
+   ===================================================================== */
+function foldMetrics(){
+ const S=foldSim,acc=foldAcc;let hyd=0,hydBur=0,phil=0,philExp=0;
+ S.seq.forEach((ch,i)=>{const a=FA(ch);
+  if(a.burial>.3){hyd++;if(acc[i]<.28)hydBur++;}
+  if(a.burial<-.2){phil++;if(acc[i]>.40)philExp++;}});
+ return {hydBuried:hyd?Math.round(100*hydBur/hyd):null,
+         philExposed:phil?Math.round(100*philExp/phil):null,
+         rg:foldRg(S.nodes),ss:S.ss.length,E:foldEnergy(S)};
+}
+function foldClass(v,good,warn){return v===null?"":v>=good?"good":v>=warn?"warn":"bad";}
+function foldUpdateMetrics(){
+ if(!foldSim||!foldAcc.length)return;
+ const m=foldMetrics(),$=id=>document.getElementById(id);
+ const hb=m.hydBuried,pe=m.philExposed;
+ $("foldHydro").textContent=hb===null?"—":hb+"%";
+ $("foldHydro").className="v "+foldClass(hb,70,45);
+ $("foldPhilic").textContent=pe===null?"—":pe+"%";
+ $("foldPhilic").className="v "+foldClass(pe,70,45);
+ $("foldSS").textContent=String(m.ss);
+ $("foldSS").className="v "+(m.ss>0?"good":"");
+ $("foldRg").textContent=m.rg.toFixed(1);
+ $("foldRg").className="v "+(m.rg<55?"good":m.rg<85?"warn":"bad");
+
+ /* contribuições energéticas */
+ const E=m.E,terms=[["solvatação",E.Esolv,"#f6ad55"],["eletrostática",E.Eelec,"#60a5fa"],
+   ["ligações H",E.Ehb,"#34d399"],["ponte S–S",E.Ess,"#facc15"],["choque estérico",E.Eclash,"#fb7185"]];
+ const maxAbs=Math.max(40,...terms.map(t=>Math.abs(t[1])));
+ $("foldBars").innerHTML=terms.map(([k,v,col])=>
+  `<div class="fold-bar"><span>${k}</span><u><b style="${v<0?"right:50%;width:"+(50*Math.abs(v)/maxAbs)+"%":"left:50%;width:"+(50*Math.abs(v)/maxAbs)+"%"};background:${col}"></b></u><s>${v.toFixed(0)}</s></div>`
+ ).join("");
+
+ /* comparação explícita antes → depois */
+ const box=$("foldChange");
+ if(foldPrevM){
+  const row=(k,a,b,unit,better)=>{
+   if(a===null||b===null)return `<div class="fold-cmp"><span>${k}</span><s>—</s></div>`;
+   const u=unit===undefined?"%":unit,dec=(u===" u.a.")?1:0,d=b-a,same=Math.abs(d)<.6;
+   const col=same?"#93a7c0":(better==="up"?(d>0?"#3dd598":"#fb7185"):(d<0?"#3dd598":"#fb7185"));
+   const arrow=same?"=":(d>0?"▲":"▼");
+   return `<div class="fold-cmp"><span>${k}</span><s>${a.toFixed(dec)}${u} <em>→</em> <b style="color:${col}">${b.toFixed(dec)}${u}</b> <b style="color:${col}">${arrow}</b></s></div>`;};
+  box.innerHTML=
+   row("apolares enterrados",foldPrevM.hydBuried,hb,undefined,"up")+
+   row("polares expostos",foldPrevM.philExposed,pe,undefined,"up")+
+   row("pontes S–S",foldPrevM.ss,m.ss,"","up")+
+   row("raio de giro",foldPrevM.rg,m.rg," u.a.","down");
+ } else box.innerHTML='<div class="fold-cmp"><span>estado de referência</span><s>aplique uma mutação para comparar</s></div>';
+
+ const dE=foldRefE===null?0:E.total-foldRefE;
+ const de=$("foldDeltaE");
+ de.textContent=(dE>0?"+":"")+dE.toFixed(0)+" u.a. "+(Math.abs(dE)<12?"(equivalente)":dE<0?"↓ mais estável":"↑ menos estável");
+ de.style.color=Math.abs(dE)<12?"#b9c9dd":dE<0?"#3dd598":"#fb7185";
+
+ const rm=$("foldRmsd");
+ if(foldLastRmsd===null){rm.textContent="—";rm.style.color="#b9c9dd";}
+ else{const rel=foldLastRmsd;
+  rm.textContent=rel.toFixed(1)+" u.a. "+(rel<8?"— forma preservada":rel<22?"— rearranjo local":"— nova conformação");
+  rm.style.color=rel<8?"#b9c9dd":rel<22?"#f6bd4a":"#fb7185";}
+}
+
+/* =====================================================================
+   CONTROLES
+   ===================================================================== */
+function foldPopulateControls(){
+ foldPos.innerHTML=foldChain.map((a,i)=>`<option value="${i}">${i+1} · ${FA(a).three}</option>`).join("");
+ foldAAsel.innerHTML=Object.keys(FOLD_AA).map(k=>
+  `<option value="${k}">${FA(k).three} (${k}) — ${FA(k).name}</option>`).join("");
+ foldPos.value=String(foldSelected);foldAAsel.value=foldChain[foldSelected];
+ foldRenderSeq();foldUpdateSelection();
+}
+function foldSyncPositions(){
+ const keep=foldPos.value;
+ [...foldPos.options].forEach((o,i)=>{o.textContent=(i+1)+" · "+FA(foldChain[i]).three;});
+ foldPos.value=keep;
+}
+function foldRenderSeq(){
+ document.getElementById("foldSeq").innerHTML=foldChain.map((a,i)=>
+  `<button class="fold-chip${i===foldSelected?" selected":""}${a!==FOLD_ORIGINAL[i]?" mutated":""}" data-fold-index="${i}" title="${i+1} · ${FA(a).name}"><i>${i+1}</i>${a}</button>`
+ ).join("");
+}
+function foldKindLabel(cls){return {hydro:"apolar",arom:"aromático apolar",polar:"polar sem carga",
+ pos:"carga positiva",neg:"carga negativa",cys:"cisteína — pode formar S–S",
+ gly:"glicina — dobradiça flexível",pro:"prolina — impõe torção"}[cls];}
+function foldUpdateSelection(){
+ foldPos.value=String(foldSelected);foldAAsel.value=foldChain[foldSelected];
+ const aa=FA(foldChain[foldSelected]),acc=foldAcc[foldSelected];
+ document.getElementById("foldSelection").innerHTML=
+  `Selecionado: <span class="fold-selected">${foldSelected+1} · ${aa.three} (${aa.name})</span> — ${foldKindLabel(aa.cls)}.`+
+  (acc!==undefined?` Acessibilidade ao solvente: <strong>${Math.round(acc*100)}%</strong> (${acc<.28?"enterrado":acc<.5?"parcialmente exposto":"exposto"}).`:"");
+ foldRenderSeq();
+}
+function foldDescribe(oldAA,newAA,pos){
+ const a=FA(oldAA),b=FA(newAA);let m=`<strong>${pos+1}: ${a.three} → ${b.three}.</strong><br>`;
+ co
