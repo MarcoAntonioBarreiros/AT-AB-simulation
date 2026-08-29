@@ -61,8 +61,34 @@ document.querySelectorAll("[data-style3d]").forEach(b=>b.addEventListener("click
 document.getElementById("pdbReset").addEventListener("click",()=>{if(pdbReady){basePdbStyle();pdbViewer.zoomTo({});pdbViewer.render();setPdbInfo("<strong>Orientação resetada.</strong><br>Use <strong>Epítopo publicado</strong> para ver os resíduos identificados e <strong>Átomos da interface</strong> para ver epítopo + parátopo.");}});
 document.querySelectorAll("[data-pdbq]").forEach(b=>b.addEventListener("click",()=>{const ok=b.dataset.pdbq==="fold";document.getElementById("pdbQFeedback").innerHTML=ok?'<span style="color:#6ee7b7"><strong>Isso.</strong> A estrutura terciária aproximou segmentos distantes na sequência e criou um epítopo descontínuo.</span>':'<span style="color:#fda4af">Não. Eles continuam separados na sequência primária; é a dobra tridimensional que os aproxima.</span>'}));
 
-const nm=document.getElementById("studentName"),a1=document.getElementById("answer1"),a2=document.getElementById("answer2");[nm,a1,a2].forEach(x=>x.addEventListener("input",checkReport));function checkReport(){document.getElementById("makeReport").disabled=!(nm.value.trim().length>2&&a1.value.trim().length>35&&a2.value.trim().length>35&&Object.keys(state.tests).length>=3)}
-document.getElementById("makeReport").addEventListener("click",()=>{const mins=Math.max(1,Math.round((Date.now()-state.started)/60000)),now=new Date();document.getElementById("repWho").textContent=`${nm.value.trim()} • ${now.toLocaleString("pt-BR")} • ${mins} min`;const shape=state.shape?fitStats(state.shape):null;let chem=0;state.picks.forEach((p,i)=>{if(p)chem+=Math.max(0,interaction(EPITOPE[i],p).score)});const fm=foldMetrics(),foldChanges=foldSeq.filter((a,i)=>a!==FOLD_ORIGINAL[i]).length;document.getElementById("repGrid").innerHTML=[["Antígeno/epítopo",state.antigenOK&&state.epitopeOK?"identificados":"incompleto"],["Complementaridade de forma",shape?`${shape.fit}% • ${shape.crashes} colisão(ões)`:"—"],["Complementaridade química",`${chem}/10 • ${Object.keys(state.tests).length} testes executados`],["Dobramento do peptídeo",`${foldChanges} substituição(ões) • ${fm.ss} ponte(s) S–S • estabilidade relativa ${fm.stab}%`]].map(x=>`<div class="repitem"><b>${x[0]}</b><span>${x[1]}</span></div>`).join("");let rows="<tr><th>Contato</th><th>Epítopo</th><th>Parátopo</th><th>Interação dominante</th><th>van der Waals</th></tr>";state.picks.forEach((p,i)=>{const it=interaction(EPITOPE[i],p);rows+=`<tr><td>${i+1}</td><td>${RES[EPITOPE[i]].code} (${RES[EPITOPE[i]].prop})</td><td>${RES[p].code} (${RES[p].prop})</td><td>${it.label}</td><td>${["repulsion","poor"].includes(it.type)?"desfavorável/ausente":"microcontatos por proximidade"}</td></tr>`});document.getElementById("repContacts").innerHTML=rows;document.getElementById("repA1").textContent=a1.value.trim();document.getElementById("repA2").textContent=a2.value.trim();document.getElementById("report").style.display="block";window.print()});
+const nm=document.getElementById("studentName");
+nm.addEventListener("input",checkReport);
+function checkReport(){
+  document.getElementById("makeReport").disabled=!(nm.value.trim().length>2&&Object.keys(state.tests).length>=3);
+}
+document.getElementById("makeReport").addEventListener("click",()=>{
+  const mins=Math.max(1,Math.round((Date.now()-state.started)/60000)),now=new Date();
+  document.getElementById("repWho").textContent=`${nm.value.trim()} • ${now.toLocaleString("pt-BR")} • ${mins} min`;
+  const shape=state.shape?fitStats(state.shape):null;
+  let chem=0;state.picks.forEach((p,i)=>{if(p)chem+=Math.max(0,interaction(EPITOPE[i],p).score)});
+  const fm=foldMetrics(),foldChanges=foldChain.filter((a,i)=>a!==FOLD_ORIGINAL[i]).length;
+  document.getElementById("repGrid").innerHTML=[
+    ["Escala",state.antigenOK&&state.epitopeOK?"antígeno e epítopo explorados":"incompleto"],
+    ["Interface",shape?`${shape.fit}% de complementaridade no modelo escolhido`:"—"],
+    ["Química",`${state.picks.filter(Boolean).length}/5 posições testadas`],
+    ["Perturbações",`${Object.keys(state.tests).length} condição(ões) testada(s)`],
+    ["Dobramento",`${foldChanges} substituição(ões) no estado atual • ${fm.ss} ponte(s) S–S`],
+    ["Estrutura real","PDB 1FDL visitado na etapa 7"]
+  ].map(x=>`<div class="repitem"><b>${x[0]}</b><span>${x[1]}</span></div>`).join("");
+  const nomes={salt:"força iônica",distance:"distância",detergent:"detergente",unfold:"alteração conformacional",mutation:"mutação"};
+  let rows='<tr><th>Etapa</th><th>Evidência registrada</th></tr>';
+  rows+=`<tr><td>Forma</td><td>${state.shape?`parátopo ${state.shape} comparado`:"—"}</td></tr>`;
+  rows+=`<tr><td>Química</td><td>${state.picks.filter(Boolean).length} contatos definidos no modelo</td></tr>`;
+  rows+=`<tr><td>Perturbações</td><td>${Object.keys(state.tests).map(k=>nomes[k]||k).join(", ")||"—"}</td></tr>`;
+  rows+=`<tr><td>Peptídeo</td><td>${foldChanges?foldChanges+" substituição(ões) no estado atual":"sequência original"}</td></tr>`;
+  document.getElementById("repContacts").innerHTML=rows;
+  document.getElementById("report").style.display="block";window.print();
+});
 })();
 </script>
 </body>
