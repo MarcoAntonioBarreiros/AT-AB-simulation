@@ -1,0 +1,186 @@
+nst wasBuried=foldAcc[pos]!==undefined&&foldAcc[pos]<.32;
+ if(a.burial>.3&&b.burial<-.2)
+  m+=(wasBuried?"Uma posição <em>enterrada</em> passou a carregar um grupo que precisa de água. ":"")+
+     "A cadeia tende a se reorganizar para levar esse resíduo à superfície — e a forma inteira muda junto.";
+ else if(a.burial<-.2&&b.burial>.3)
+  m+="Um resíduo que estava confortável no solvente passa a ser apolar. Ele será puxado para o interior, ou ficará exposto criando uma <em>face apolar</em> — situação que, em uma proteína real, favorece agregação.";
+ else if(a.cls==="cys"&&b.cls!=="cys")
+  m+="O tiol desapareceu: a ponte dissulfeto que dependia desta cisteína não pode mais existir. Compare a compactação antes e depois.";
+ else if(a.cls!=="cys"&&b.cls==="cys")
+  m+="Surgiu um novo tiol. A ponte S–S só se forma se outra cisteína livre chegar perto o suficiente durante o enovelamento.";
+ else if(b.cls==="pro")
+  m+="A prolina restringe o esqueleto. Ela impõe uma torção e frequentemente interrompe elementos regulares de estrutura secundária.";
+ else if(b.cls==="gly")
+  m+="A glicina não tem cadeia lateral: ela funciona como dobradiça e aumenta a liberdade conformacional local.";
+ else if(Math.abs(b.r-a.r)>2.5)
+  m+=`Mudança de volume relevante (raio ${a.r} → ${b.r}). Empacotamento é um problema geométrico: sobra ou falta espaço no interior.`;
+ else m+="Mudança sutil de propriedade local. Compare o contorno tracejado com o novo contorno e veja se a forma resistiu.";
+ document.getElementById("foldInfo").innerHTML=m;
+}
+function foldApply(pos,newAA){
+ if(foldPhase!=="idle")return;
+ const old=foldChain[pos];
+ if(old===newAA){document.getElementById("foldInfo").innerHTML=
+  "<strong>Nenhuma alteração.</strong><br>Escolha um aminoácido diferente para perturbar a cadeia.";return;}
+ foldChain[pos]=newAA;foldLastMut={pos,from:old,to:newAA};foldDescribe(old,newAA,pos);
+ foldAAsel.value=newAA;foldSyncPositions();foldRenderSeq();foldUpdateSelection();
+ foldStartFold("procurando novo mínimo…");
+}
+function foldPreset(k){
+ if(foldPhase!=="idle")return;
+ const set=(p,a)=>{foldSelected=p;foldPos.value=String(p);foldApply(p,a);};
+ if(k==="reset"){foldChain=[...FOLD_ORIGINAL];foldSelected=10;foldLastMut=null;
+  foldPopulateControls();
+  document.getElementById("foldInfo").innerHTML="<strong>Sequência original restaurada.</strong><br>Esta é a referência energética. Todas as comparações de estabilidade partem daqui.";
+  foldStartFold("dobrando a sequência original…");return;}
+ if(k==="denature"){
+  foldChain=foldChain.map(ch=>FA(ch).burial>.4?"D":ch);foldSelected=0;foldLastMut=null;foldPopulateControls();
+  document.getElementById("foldInfo").innerHTML="<strong>Todos os resíduos fortemente apolares viraram aspartato.</strong><br>Sem efeito hidrofóbico não há núcleo, e as cargas negativas se repelem: a cadeia se estende. É o análogo de um estado desenovelado.";
+  foldStartFold("desnaturando…");return;}
+ if(k==="restoreSS"){
+  foldChain[4]="C";foldChain[19]="C";foldSelected=19;foldLastMut=null;foldPopulateControls();
+  document.getElementById("foldInfo").innerHTML="<strong>Cisteínas restauradas nas posições 5 e 20.</strong><br>Elas precisam primeiro se aproximar durante o enovelamento. Quando a distância fica pequena o suficiente, a ligação covalente se forma e trava a conformação.";
+  foldStartFold("oxidando as cisteínas…");return;}
+ const map={buryCharge:[10,"D"],exposeHydro:[5,"I"],breakSS:[19,"A"],hinge:[8,"P"],loseAnchor:[13,"E"]};
+ if(map[k])set(map[k][0],map[k][1]);
+}
+function foldSelectAt(x,y){
+ if(!foldSim)return;
+ let best=-1,bd=26/foldViewT.scale;
+ for(let i=0;i<foldSim.n;i++){
+  const d=Math.hypot(x-foldSim.nodes[i].x,y-foldSim.nodes[i].y);
+  if(d<bd){bd=d;best=i;}}
+ if(best>=0){foldSelected=best;foldUpdateSelection();foldDraw();}
+}
+
+/* ---------- eventos ---------- */
+foldCanvas.addEventListener("pointerdown",e=>{
+ const r=foldCanvas.getBoundingClientRect();
+ const m=foldToModel((e.clientX-r.left)*FP.W/r.width,(e.clientY-r.top)*FP.H/r.height);
+ foldSelectAt(m.x,m.y);});
+document.getElementById("foldSeq").addEventListener("click",e=>{
+ const b=e.target.closest("[data-fold-index]");if(!b)return;
+ foldSelected=+b.dataset.foldIndex;foldUpdateSelection();foldDraw();});
+foldPos.addEventListener("change",()=>{foldSelected=+foldPos.value;foldUpdateSelection();foldDraw();});
+document.getElementById("foldMutate").addEventListener("click",()=>foldApply(+foldPos.value,foldAAsel.value));
+document.getElementById("foldRelax").addEventListener("click",()=>{
+ if(foldPhase!=="idle")return;
+ document.getElementById("foldInfo").innerHTML="<strong>Reenovelando a mesma sequência.</strong><br>O motor recomeça de um novelo aleatório e volta a resfriar. Se a forma final for praticamente a mesma, isso ilustra o princípio de Anfinsen: a sequência determina a estrutura.";
+ foldStartFold("reenovelando…");});
+document.querySelectorAll("[data-fold-preset]").forEach(b=>
+ b.addEventListener("click",()=>foldPreset(b.dataset.foldPreset)));
+document.querySelectorAll("[data-fold-view]").forEach(b=>
+ b.addEventListener("click",()=>{const k=b.dataset.foldView;
+  foldShow[k]=!foldShow[k];b.classList.toggle("on",foldShow[k]);foldDraw();}));
+document.querySelectorAll("[data-foldq]").forEach(b=>b.addEventListener("click",()=>{
+ const v=b.dataset.foldq,fb=document.getElementById("foldQFeedback");
+ fb.innerHTML=v==="forces"
+  ?'<span style="color:#6ee7b7"><strong>Isso.</strong> A conformação nativa é o mínimo de uma soma de interações. Trocar um resíduo redefine essa soma, e o novo mínimo pode estar em outra região do espaço conformacional — por isso a mudança não é local.</span>'
+  :v==="primary"
+  ?'<span style="color:#fda4af"><strong>Incompleto.</strong> A estrutura primária realmente mudou, mas isso é a causa imediata, não o mecanismo. O que muda a forma é o conjunto de interações que passa a ser favorecido.</span>'
+  :'<span style="color:#fda4af"><strong>Parcialmente.</strong> Volume importa no empacotamento, mas aqui o fator dominante é a incompatibilidade entre uma carga e um ambiente sem água — não o tamanho.</span>'; }));
+window.addEventListener("resize",()=>{if(state.stage===6)foldResize();});
+
+/* ---------- inicialização ---------- */
+foldPopulateControls();
+foldStartFold("dobrando a sequência original…");
+function foldKick(){if(foldPhase==="idle")foldDraw();}
+
+document.getElementById("go6").addEventListener("click",()=>{goto(6);setTimeout(()=>{foldResize();},80)});
+
+document.getElementById("go7").addEventListener("click",()=>{goto(7);setTimeout(initPDBViewer,120)});
+let pdbViewer=null,pdbReady=false;
+let pdbChains={antigen:"Y",light:"L",heavy:"H"};
+function antigenSel(){return {chain:pdbChains.antigen}}
+function antibodySel(){return {or:[{chain:pdbChains.light},{chain:pdbChains.heavy}]}}
+function epitopeSel(){return {chain:pdbChains.antigen,resi:["18-27","117-125"]}}
+function interfaceAbSel(){
+  const epi=epitopeSel();
+  return {or:[
+    {chain:pdbChains.light,within:{distance:4.5,sel:epi}},
+    {chain:pdbChains.heavy,within:{distance:4.5,sel:epi}}
+  ]};
+}
+function interfaceAgSel(){
+  return {chain:pdbChains.antigen,within:{distance:4.5,sel:antibodySel()}};
+}
+function clearPdbLabels(){
+  if(!pdbViewer)return;
+  try{pdbViewer.removeAllLabels()}catch(e){}
+}
+function epitopeResiduesFromModel(){
+  if(!pdbViewer)return [];
+  const atoms=pdbViewer.selectedAtoms(epitopeSel());
+  const map=new Map();
+  atoms.forEach(a=>{
+    const key=(a.chain||"")+"|"+a.resi;
+    if(!map.has(key)) map.set(key,{chain:a.chain,resi:+a.resi,resn:a.resn||"RES",atom:a.atom==="CA"?a:null,first:a});
+    else if(a.atom==="CA") map.get(key).atom=a;
+  });
+  return [...map.values()].sort((a,b)=>a.resi-b.resi);
+}
+function showEpitopeLabels(){
+  clearPdbLabels();
+  epitopeResiduesFromModel().forEach(r=>{
+    const a=r.atom||r.first;
+    if(!a)return;
+    pdbViewer.addLabel((r.resn||"RES")+r.resi,{
+      position:{x:a.x,y:a.y,z:a.z},
+      backgroundColor:"#231326",
+      backgroundOpacity:0.78,
+      fontColor:"#ffd7df",
+      fontSize:10,
+      borderColor:"#fb7185",
+      borderThickness:1,
+      inFront:true
+    });
+  });
+}
+function updateEpitopeResidueList(){
+  const rows=epitopeResiduesFromModel();
+  if(!rows.length)return;
+  const one=rows.filter(r=>r.resi>=18&&r.resi<=27).map(r=>`${r.resn}${r.resi}`).join(" • ");
+  const two=rows.filter(r=>r.resi>=117&&r.resi<=125).map(r=>`${r.resn}${r.resi}`).join(" • ");
+  document.getElementById("pdbResidueList").innerHTML=
+    `<strong>Segmento 18–27:</strong><br><span class="mono">${one}</span><br><br>`+
+    `<strong>Segmento 117–125:</strong><br><span class="mono">${two}</span>`;
+}
+function detectPdbChains(){
+  const atoms=pdbViewer.selectedAtoms({});
+  const chains=[...new Set(atoms.map(a=>a.chain).filter(Boolean))];
+  if(chains.includes("Y")&&chains.includes("L")&&chains.includes("H")){
+    pdbChains={antigen:"Y",light:"L",heavy:"H"};
+  }else if(chains.includes("C")&&chains.includes("A")&&chains.includes("B")){
+    pdbChains={antigen:"C",light:"A",heavy:"B"};
+  }else if(chains.length>=3){
+    // Fallback only to avoid an empty viewer; 1FDL is expected to match one of the maps above.
+    pdbChains={light:chains[0],heavy:chains[1],antigen:chains[2]};
+  }
+  return {atoms:atoms.length,chains};
+}
+function clearPdbSurfaces(){if(!pdbViewer)return;try{pdbViewer.removeAllSurfaces()}catch(e){}}
+function basePdbStyle(){
+  if(!pdbViewer)return;
+  clearPdbSurfaces();
+  clearPdbLabels();
+  // Always leave a faint fallback representation, so a chain-mapping problem can never make the viewer blank.
+  pdbViewer.setStyle({}, {cartoon:{color:"#718198",opacity:0.16}});
+  pdbViewer.setStyle({chain:pdbChains.antigen},{cartoon:{color:"#f59e0b"}});
+  pdbViewer.setStyle({chain:pdbChains.light},{cartoon:{color:"#42d3e8"}});
+  pdbViewer.setStyle({chain:pdbChains.heavy},{cartoon:{color:"#a78bfa"}});
+}
+function setPdbInfo(h){document.getElementById("pdbInfo").innerHTML=h}
+function mark3d(attr,val){document.querySelectorAll("[data-"+attr+"3d]").forEach(b=>b.classList.toggle("active",b.dataset[attr+"3d"]===val))}
+function view3D(mode){
+ if(!pdbReady)return;
+ basePdbStyle();mark3d("view",mode);
+ const ag=antigenSel(),ab=antibodySel(),epi=epitopeSel(),iface=interfaceAbSel();
+ if(mode==="complex"){
+   pdbViewer.zoomTo({});
+   setPdbInfo('<strong>Complexo completo.</strong><br>Lisozima em laranja; cadeia leve do Fab em ciano; cadeia pesada em violeta. Procure a região onde as três cadeias se aproximam.');
+ }else if(mode==="antigen"){
+   pdbViewer.setStyle({},{});pdbViewer.setStyle(ag,{cartoon:{color:"#f59e0b"}});pdbViewer.zoomTo(ag);
+   setPdbInfo('<strong>Antígeno isolado.</strong><br>Observe a dobra da lisozima. Segmentos distantes na sequência podem ficar vizinhos na superfície tridimensional.');
+ }else if(mode==="antibody"){
+   pdbViewer.setStyle({},{});pdbViewer.setStyle({chain:pdbChains.light},{cartoon:{color:"#42d3e8"}});pdbViewer.setStyle({chain:pdbChains.heavy},{cartoon:{color:"#a78bfa"}});pdbViewer.zoomTo(ab);
+   setPdbInfo('<strong>Fab D1.3.</strong><br
