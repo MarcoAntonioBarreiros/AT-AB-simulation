@@ -1,0 +1,69 @@
+grid;grid-template-columns:1fr 1fr;gap:6px}
+.fold-metric{border:1px solid #263a55;background:#081422;border-radius:10px;padding:8px}
+.fold-metric .k{font-size:8px;color:#8296b0;font-weight:850;text-transform:uppercase;letter-spacing:.03em;line-height:1.3}
+.fold-metric .v{font-size:15px;font-weight:900;margin-top:3px;font-variant-numeric:tabular-nums}
+.fold-metric .v.good{color:#3dd598}.fold-metric .v.warn{color:#f6bd4a}.fold-metric .v.bad{color:#fb7185}
+.fold-delta{margin-top:8px;border:1px solid #263a55;background:#081422;border-radius:10px;padding:9px}
+.fold-delta .k{font-size:8px;color:#8296b0;font-weight:850;text-transform:uppercase;letter-spacing:.03em}
+.fold-delta .v{font-size:13px;font-weight:900;margin-top:3px}
+.fold-change{margin-top:8px;border:1px solid #263a55;background:#081422;border-radius:10px;padding:8px 9px;display:flex;flex-direction:column;gap:5px}
+.fold-cmp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:9px}
+.fold-cmp span{color:#8296b0;font-weight:850;text-transform:uppercase;letter-spacing:.02em}
+.fold-cmp s{text-decoration:none;color:#93a7c0;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fold-cmp s em{font-style:normal;opacity:.55;margin:0 2px}
+.fold-bars{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.fold-bar{display:grid;grid-template-columns:74px 1fr 40px;align-items:center;gap:6px;font-size:8.5px;color:#8fa3bd;font-weight:800}
+.fold-bar u{text-decoration:none;display:block;height:6px;border-radius:99px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}
+.fold-bar u b{position:absolute;top:0;bottom:0;border-radius:99px}
+.fold-bar s{text-decoration:none;text-align:right;font-variant-numeric:tabular-nums;color:#b9c9dd}
+.fold-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;font-size:8.5px;color:#93a7c0;font-weight:800}
+.fold-legend span{display:flex;align-items:center;gap:4px}
+.fold-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.fold-info{border:1px solid #324a69;background:#0b1a2d;border-radius:12px;padding:11px;font-size:9.5px;color:#c2d3e6;line-height:1.55}
+.fold-info strong{color:#f0f5ff}
+.fold-selected{color:#e9d5ff;font-weight:900}
+.fold-question{border:1px solid #2c4260;background:#0a1728;border-radius:12px;padding:11px}
+.fold-question b{font-size:10px}.fold-question p{font-size:9.5px;color:#9fb2c9;margin:5px 0 8px;line-height:1.45}
+.fold-qbuttons{display:flex;flex-direction:column;gap:6px}
+.fold-qfeedback{font-size:9px;margin-top:7px;line-height:1.45}
+@media(max-width:1080px){.fold-layout{grid-template-columns:1fr}.fold-view{min-height:auto}}
+@media(max-width:560px){.fold-row,.fold-actions,.fold-metrics{grid-template-columns:1fr}.fold-view{min-height:360px}.fold-overlay{max-width:60%}}
+
+
+
+/* v15 — observação guiada: escala, interface e solvatação */
+.observe-card{margin:0 0 14px;border-color:#35506f;background:linear-gradient(135deg,rgba(14,31,52,.98),rgba(10,23,40,.98))}
+.observe-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.observe-head h3{font-size:14px;margin:0 0 3px}.observe-head p{font-size:10px;color:#9eb1c8;margin:0;max-width:760px}.observe-pill{font-size:9px;font-weight:900;color:#bfe0ff;border:1px solid #3b5d82;background:#0b1b30;border-radius:99px;padding:6px 9px;white-space:nowrap}
+.observe-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.observe-item{border:1px solid #293f5a;background:#081626;border-radius:11px;padding:9px 10px;min-height:66px}.observe-item b{font-size:10px;display:block;color:#edf6ff;margin-bottom:3px}.observe-item span{font-size:9px;line-height:1.4;color:#94a9c2;display:block}.observe-item strong{color:#d7eaff}
+.scale-log{position:relative;height:74px;margin-top:8px;border:1px solid #263b55;border-radius:12px;background:#07131f;overflow:hidden;padding:13px 17px 0}.scale-axis{position:absolute;left:7%;right:7%;top:35px;height:2px;background:#405873}.scale-tick{position:absolute;top:28px;width:1px;height:16px;background:#647c99}.scale-tick em{position:absolute;top:18px;left:50%;transform:translateX(-50%);font-style:normal;font-size:8px;color:#859ab4;white-space:nowrap}.scale-marker{position:absolute;top:9px;transform:translateX(-50%);font-size:8.5px;font-weight:900;padding:4px 6px;border-radius:7px;border:1px solid currentColor;background:#0a1727;white-space:nowrap}.scale-marker:after{content:"";position:absolute;left:50%;top:100%;height:17px;border-left:1px dashed currentColor;opacity:.7}.scale-note{font-size:8.5px;color:#7f94af;margin-top:6px;text-align:right}
+.scale-readout{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.scale-chip{font-size:9px;border:1px solid #2e4764;border-radius:9px;padding:6px 8px;background:#091726;color:#a9bbcf}.scale-chip b{color:#eef6ff}
+.interface-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;font-size:9px;color:#9eb0c6}.interface-key{display:flex;align-items:center;gap:5px;border:1px solid #273c55;background:#081522;padding:5px 7px;border-radius:8px}.interface-swatch{width:16px;height:9px;border-radius:3px;display:inline-block}.interface-definition{margin-top:10px;border-left:3px solid #38bdf8;background:#091a2c;border-radius:0 10px 10px 0;padding:9px 11px;font-size:10px;color:#aec0d4;line-height:1.45}.interface-definition strong{color:#eaf6ff}
+.solv-card{margin:14px 0}.solv-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px}.solv-figure{border:1px solid #273c55;border-radius:14px;background:#06121f;overflow:hidden}.solv-figure svg{width:100%;height:auto;display:block}.solv-controls{display:flex;flex-direction:column;gap:7px}.solv-controls h3{font-size:12px;margin:0 0 2px}.solv-controls p{font-size:9.5px;color:#92a7c0;margin:0 0 4px;line-height:1.45}.solv-btn{border:1px solid #35506e;background:#0a1727;color:#c6d5e7;border-radius:9px;padding:8px 9px;text-align:left;font-size:9.5px;font-weight:850}.solv-btn.active{border-color:#6bbcff;background:#12283f;color:#edf7ff}.solv-readout{border:1px solid #29435f;background:#081728;border-radius:10px;padding:9px;font-size:9.5px;color:#b5c5d8;line-height:1.48;min-height:80px}.solv-readout strong{color:#eef7ff}.solv-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;font-size:8.5px;color:#89a0ba}.solv-legend span{display:flex;align-items:center;gap:4px}.water-dot{fill:#7dd3fc;opacity:.7}.water-ring{fill:none;stroke:#7dd3fc;opacity:.22}.water-arrow{stroke:#7dd3fc;stroke-width:2;fill:none;marker-end:url(#solvArrow)}
+.watch-sequence{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:0 0 10px}.watch-step{border:1px solid #2b425d;background:#081624;border-radius:10px;padding:8px}.watch-step b{font-size:9.5px;display:block}.watch-step span{font-size:8.5px;color:#8fa5be;line-height:1.35;display:block;margin-top:2px}.watch-step i{font-style:normal;display:inline-grid;place-items:center;width:18px;height:18px;border:1px solid #48617e;border-radius:50%;font-size:8px;margin-right:4px;color:#cfe6ff}
+.visual-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:9px}.visual-legend div{border:1px solid #2a4059;background:#081522;border-radius:9px;padding:7px}.visual-legend b{font-size:8.8px;display:block}.visual-legend span{font-size:8px;color:#8298b2;line-height:1.3;display:block;margin-top:2px}.visual-sample{display:block;width:28px;height:10px;border-radius:5px;margin-bottom:5px}.fold-details{margin-top:8px;border:1px solid #293f58;border-radius:9px;background:#081522}.fold-details summary{cursor:pointer;padding:7px 9px;font-size:8.8px;font-weight:850;color:#a9bdd3}.fold-details div{padding:0 9px 8px;font-size:8.5px;color:#8096af;line-height:1.45}
+.pdb-roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:9px}.pdb-roadmap div{border:1px solid #2c435e;background:#081522;border-radius:9px;padding:7px}.pdb-roadmap b{font-size:8.8px;display:block;color:#e4f1ff}.pdb-roadmap span{font-size:8px;color:#849bb5;display:block;line-height:1.3;margin-top:2px}
+@media(max-width:950px){.solv-wrap{grid-template-columns:1fr}.observe-grid{grid-template-columns:1fr 1fr}.watch-sequence,.pdb-roadmap{grid-template-columns:1fr 1fr}.visual-legend{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.observe-grid,.watch-sequence,.pdb-roadmap,.visual-legend{grid-template-columns:1fr}.scale-marker{font-size:7.5px}.solv-controls{order:-1}}
+
+</style>
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+</head>
+<body>
+<header class="no-print"><div class="wrap head"><div class="brand"><div class="logo">🧩</div><div><h1>Reconhecimento antigênico</h1><small>Observe • teste • compare • explique a interface molecular</small></div></div><div class="progress-mini" id="progressMini">Etapa 1 de 7</div></div></header>
+<main class="wrap">
+<div class="steps no-print"><div class="step on" data-step="1"><b>1</b><span>Escala: antígeno × epítopo</span></div><div class="step" data-step="2"><b>2</b><span>Forma e interface</span></div><div class="step" data-step="3"><b>3</b><span>Química + solvatação</span></div><div class="step" data-step="4"><b>4</b><span>Perturbar a interface</span></div><div class="step" data-step="5"><b>5</b><span>Afinidade × avidez</span></div><div class="step" data-step="6"><b>6</b><span>Dobramento do peptídeo</span></div><div class="step" data-step="7"><b>7</b><span>Estrutura 3D real</span></div></div>
+<section class="stage active" id="s1">
+<div class="hero"><div><h2>1. Da célula ao ponto de contato: mude de escala</h2><p>O primeiro desafio é enxergar <strong>em que escala</strong> o reconhecimento acontece. Use o zoom e compare célula, macromolécula e região de contato.</p></div><span class="badge">Bacilo Gram-positivo • modelo didático</span></div>
+<div class="card pad observe-card">
+  <div class="observe-head"><div><h3>👁 Antes de clicar: aprenda a ler a escala</h3><p>A barra é <strong>logarítmica</strong>: cada passo para a direita representa estruturas aproximadamente 10 vezes menores. Assim é possível colocar µm e nm no mesmo mapa visual.</p></div><span class="observe-pill">lente 1 · escala</span></div>
+  <div class="scale-log" aria-label="Escala logarítmica de micrômetros a nanômetros">
+    <div class="scale-axis"></div>
+    <div class="scale-tick" style="left:8%"><em>1 µm = 1000 nm</em></div>
+    <div class="scale-tick" style="left:37%"><em>100 nm</em></div>
+    <div class="scale-tick" style="left:66%"><em>10 nm</em></div>
+    <div class="scale-tick" style="left:94%"><em>1 nm</em></div>
+    <span class="scale-marker" style="left:12%;color:#ec4899">bacilo ~µm</span>
+    <span class="scale-marker" style="left:63%;color:#f59e0b">antígeno 10–15 nm</span>
+    <span class="scale-marker" style="left:91%;color:#34d399">epítopo 1–2 nm</span>
+  </div>
+  <div class="scale-readout"><span class="scale-chip">Ao usar o zoom, pergunte: <b>o campo inteiro representa o quê?</b></span><span class="scale-chip">E depois: <b>qual parte realmente entra em contato?</b></span><span class="scale-chip">A
