@@ -1,0 +1,268 @@
+l=document.getElementById("foldAA"),
+      foldStatusEl=document.getElementById("foldStatus"),
+      foldStatusText=document.getElementById("foldStatusText"),
+      foldStatusBar=document.getElementById("foldStatusBar");
+
+
+/* moléculas de água (rede levemente perturbada) */
+(function(){const R=foldRng(20240612);
+ for(let y=-380;y<FP.H+380;y+=40)for(let x=-460;x<FP.W+460;x+=40)
+  foldWater.push({x:x+(R()-.5)*24,y:y+(R()-.5)*24,ph:R()*6.28});})();
+
+/* =====================================================================
+   BUSCA DO ENOVELAMENTO (assíncrona, em fatias, para não travar a página)
+   ===================================================================== */
+let foldJob=null;
+function foldStartFold(message){
+ if(foldJob)foldJob.cancelled=true;
+ foldPrev=foldSim?foldSim.nodes.map(p=>({x:p.x,y:p.y})):null;
+ foldGhostSeq=foldSim?[...foldSim.seq]:[...foldChain];
+ foldPrevM=(foldSim&&foldAcc.length===foldSim.n)?foldMetrics():null;
+ foldGhost=null;foldAligned=null;
+ const base=foldHash(foldChain);
+ const job={cancelled:false,k:0,step:0,best:null,bestE:Infinity,bestTraj:null,
+            S:null,traj:null,message:message||"dobrando…"};
+ foldJob=job;
+ foldPhase="searching";
+ foldStatusEl.classList.add("on");
+ foldStatusText.textContent=job.message;
+ const CHUNK=350;
+ function newSeed(){
+  job.S=foldMakeState(foldChain,base+job.k*2654435761);
+  job.traj=[];job.step=0;
+ }
+ newSeed();
+ function slice(){
+  if(job.cancelled)return;
+  const end=Math.min(job.step+CHUNK,FP.frames);
+  for(;job.step<end;job.step++){
+   const T=Math.max(0,1-job.step/(FP.frames*.78));
+   foldStep(job.S,T*T);
+   if(job.step%FP.recordEvery===0)job.traj.push(job.S.nodes.map(p=>({x:p.x,y:p.y})));
+  }
+  if(job.step>=FP.frames){
+   job.traj.push(job.S.nodes.map(p=>({x:p.x,y:p.y})));
+   const E=foldEnergy(job.S).total;
+   if(E<job.bestE){job.bestE=E;job.best=job.S;job.bestTraj=job.traj;
+    job.bestSS=job.S.ss.map(p=>[...p]);}
+   job.k++;
+   if(job.k<FP.seeds){newSeed();}
+   else{foldPlay(job);return;}
+  }
+  foldStatusBar.style.right=(100-100*(job.k*FP.frames+job.step)/(FP.seeds*FP.frames))+"%";
+  requestAnimationFrame(slice);
+ }
+ requestAnimationFrame(slice);
+}
+
+/* reprodução da trajetória vencedora — o aluno vê a cadeia enovelar */
+function foldPlay(job){
+ foldPhase="playing";
+ foldStatusText.textContent="enovelando…";
+ const traj=job.bestTraj;let f=0;
+ job.best.ss=[];   // as pontes só aparecem ao final da trajetória
+ /* alinha a forma anterior à final ANTES de animar, para que o contorno
+    tracejado e as setas já apareçam na mesma orientação */
+ if(foldPrev&&foldGhostSeq&&foldPrev.length===traj[traj.length-1].length){
+  foldAligned=foldAlign(foldPrev,traj[traj.length-1]);
+  foldGhost={pts:foldAligned,seq:foldGhostSeq,
+   lines:foldContour(foldAligned,foldGhostSeq.map(ch=>FA(ch).r+FP.probe))};
+ }
+ const stride=Math.max(1,Math.round(traj.length/55));
+ foldSim=job.best;
+ (function frame(){
+  if(job.cancelled)return;
+  if(f<traj.length){
+   for(let i=0;i<foldSim.nodes.length;i++){foldSim.nodes[i].x=traj[f][i].x;foldSim.nodes[i].y=traj[f][i].y;}
+   if(f%12===0)foldAcc=foldAccessibility(foldSim);
+   foldStatusBar.style.right=(100-100*f/traj.length)+"%";
+   foldDraw();f+=stride;requestAnimationFrame(frame);
+  }else{
+   const last=traj[traj.length-1];
+   for(let i=0;i<foldSim.nodes.length;i++){foldSim.nodes[i].x=last[i].x;foldSim.nodes[i].y=last[i].y;}
+   foldSim.ss=job.bestSS||foldSim.ss;
+   foldAcc=foldAccessibility(foldSim);
+   foldPhase="idle";foldStatusEl.classList.remove("on");
+   foldLastRmsd=foldPrev?foldRmsd(foldPrev,foldSim.nodes):null;
+   if(foldRefE===null)foldRefE=foldEnergy(foldSim).total;
+   foldUpdateMetrics();foldUpdateSelection();foldDraw();foldJob=null;
+  }
+ })();
+}
+
+/* =====================================================================
+   DESENHO — com enquadramento automático suavizado
+   ===================================================================== */
+const foldViewT={scale:1,cx:FP.W/2,cy:FP.H/2,ready:false};
+let foldBaseA=1,foldBaseD=1;
+
+function foldResize(){
+ const rect=foldCanvas.getBoundingClientRect();if(!rect.width)return;
+ const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(320,Math.round(rect.width)),
+       h=Math.round(w*FP.H/FP.W);
+ if(foldCanvas.width!==Math.round(w*dpr)||foldCanvas.height!==Math.round(h*dpr)){
+  foldCanvas.width=Math.round(w*dpr);foldCanvas.height=Math.round(h*dpr);
+  foldCanvas.style.height=h+"px";
+ }
+ foldBaseA=dpr*w/FP.W;foldBaseD=dpr*h/FP.H;
+ foldCtx.setTransform(foldBaseA,0,0,foldBaseD,0,0);
+ foldDraw();
+}
+/* alvo de enquadramento: caixa da superfície + margem, limitado a 2,6x */
+function foldFit(){
+ const S=foldSim;if(!S)return;
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+ for(let i=0;i<S.n;i++){const r=S.rad[i]+FP.probe+6,p=S.nodes[i];
+  if(p.x-r<x0)x0=p.x-r;if(p.x+r>x1)x1=p.x+r;
+  if(p.y-r<y0)y0=p.y-r;if(p.y+r>y1)y1=p.y+r;}
+ const bw=Math.max(60,x1-x0),bh=Math.max(60,y1-y0);
+ const t=Math.min(2.6,(FP.W-70)/bw,(FP.H-70)/bh);
+ const tcx=(x0+x1)/2,tcy=(y0+y1)/2;
+ if(!foldViewT.ready){foldViewT.scale=t;foldViewT.cx=tcx;foldViewT.cy=tcy;foldViewT.ready=true;}
+ else{const k=foldPhase==="playing"?.10:.16;foldViewT.scale+=(t-foldViewT.scale)*k;
+  foldViewT.cx+=(tcx-foldViewT.cx)*k;foldViewT.cy+=(tcy-foldViewT.cy)*k;}
+}
+function foldApplyView(ctx){
+ ctx.translate(FP.W/2,FP.H/2);ctx.scale(foldViewT.scale,foldViewT.scale);
+ ctx.translate(-foldViewT.cx,-foldViewT.cy);
+}
+function foldToModel(sx,sy){
+ return {x:(sx-FP.W/2)/foldViewT.scale+foldViewT.cx,
+         y:(sy-FP.H/2)/foldViewT.scale+foldViewT.cy};
+}
+/* caminho = união de discos (a regra nonzero preenche a união corretamente) */
+function foldUnionPath(ctx,pts,radii,grow){
+ ctx.beginPath();
+ for(let i=0;i<pts.length;i++){
+  const r=Math.max(.5,radii[i]+grow);
+  ctx.moveTo(pts[i].x+r,pts[i].y);ctx.arc(pts[i].x,pts[i].y,r,0,Math.PI*2);}
+}
+/* ---------------------------------------------------------------
+   Contorno da superfície acessível ao solvente.
+   Campo escalar f(p) = max_i (R_i − |p − p_i|); o contorno é f = 0,
+   ou seja, exatamente a borda da união dos discos de raio R_i.
+   Marching squares + encadeamento dos segmentos em polilinhas, para
+   que a linha possa ser tracejada corretamente.
+   --------------------------------------------------------------- */
+function foldField(x,y,pts,radii){
+ let m=-1e9;
+ for(let i=0;i<pts.length;i++){
+  const dx=x-pts[i].x,dy=y-pts[i].y,v=radii[i]-Math.sqrt(dx*dx+dy*dy);
+  if(v>m)m=v;}
+ return m;
+}
+function foldContour(pts,radii){
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+ for(let i=0;i<pts.length;i++){const r=radii[i]+4;
+  if(pts[i].x-r<x0)x0=pts[i].x-r;if(pts[i].x+r>x1)x1=pts[i].x+r;
+  if(pts[i].y-r<y0)y0=pts[i].y-r;if(pts[i].y+r>y1)y1=pts[i].y+r;}
+ const cell=Math.max(2.4,Math.min(6,(x1-x0)/90)),
+       nx=Math.ceil((x1-x0)/cell)+1,ny=Math.ceil((y1-y0)/cell)+1;
+ const F=new Float32Array(nx*ny);
+ for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)
+  F[j*nx+i]=foldField(x0+i*cell,y0+j*cell,pts,radii);
+ const segs=[];
+ const ip=(xa,ya,va,xb,yb,vb)=>{const t=va/(va-vb);return[xa+(xb-xa)*t,ya+(yb-ya)*t];};
+ for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){
+  const v0=F[j*nx+i],v1=F[j*nx+i+1],v2=F[(j+1)*nx+i+1],v3=F[(j+1)*nx+i];
+  let code=(v0>0?1:0)|(v1>0?2:0)|(v2>0?4:0)|(v3>0?8:0);
+  if(code===0||code===15)continue;
+  const X=x0+i*cell,Y=y0+j*cell,X1=X+cell,Y1=Y+cell;
+  const top=()=>ip(X,Y,v0,X1,Y,v1),right=()=>ip(X1,Y,v1,X1,Y1,v2),
+        bot=()=>ip(X1,Y1,v2,X,Y1,v3),left=()=>ip(X,Y1,v3,X,Y,v0);
+  const add=(a,b)=>segs.push([a[0],a[1],b[0],b[1]]);
+  switch(code){
+   case 1:case 14:add(left(),top());break;
+   case 2:case 13:add(top(),right());break;
+   case 3:case 12:add(left(),right());break;
+   case 4:case 11:add(right(),bot());break;
+   case 5:add(left(),top());add(right(),bot());break;
+   case 6:case 9:add(top(),bot());break;
+   case 7:case 8:add(left(),bot());break;
+   case 10:add(top(),right());add(left(),bot());break;
+  }
+ }
+ /* encadeia os segmentos em polilinhas para permitir tracejado contínuo */
+ const key=(x,y)=>Math.round(x*4)+","+Math.round(y*4),map=new Map();
+ segs.forEach((sg,k)=>{for(const kk of [key(sg[0],sg[1]),key(sg[2],sg[3])]){
+  if(!map.has(kk))map.set(kk,[]);map.get(kk).push(k);}});
+ const used=new Array(segs.length).fill(false),lines=[];
+ for(let k=0;k<segs.length;k++){
+  if(used[k])continue;used[k]=true;
+  const line=[[segs[k][0],segs[k][1]],[segs[k][2],segs[k][3]]];
+  for(let dir=0;dir<2;dir++){
+   let end=dir?line[0]:line[line.length-1];
+   for(let guard=0;guard<4000;guard++){
+    const cands=map.get(key(end[0],end[1]))||[];
+    let nxt=-1;for(const c of cands)if(!used[c]){nxt=c;break;}
+    if(nxt<0)break;
+    used[nxt]=true;const sg=segs[nxt];
+    const a=[sg[0],sg[1]],b=[sg[2],sg[3]];
+    const near=Math.abs(a[0]-end[0])<.3&&Math.abs(a[1]-end[1])<.3;
+    const add=near?b:a;
+    if(dir)line.unshift(add);else line.push(add);
+    end=add;
+   }
+  }
+  if(line.length>3)lines.push(line);
+ }
+ return lines;
+}
+function foldStrokeContour(c,lines,widthPx,color,dashPx){
+ const z=foldViewT.scale;
+ c.save();c.strokeStyle=color;c.lineWidth=widthPx/z;c.lineJoin="round";c.lineCap="round";
+ if(dashPx)c.setLineDash([dashPx/z,(dashPx*.85)/z]);
+ for(const L of lines){c.beginPath();
+  for(let i=0;i<L.length;i++)i?c.lineTo(L[i][0],L[i][1]):c.moveTo(L[i][0],L[i][1]);
+  c.stroke();}
+ c.setLineDash([]);c.restore();
+}
+function foldInsideSurface(x,y,pad){
+ const S=foldSim;if(!S)return false;
+ for(let i=0;i<S.n;i++){
+  const r=S.rad[i]+FP.probe+(pad||0),dx=x-S.nodes[i].x,dy=y-S.nodes[i].y;
+  if(dx*dx+dy*dy<r*r)return true;}
+ return false;
+}
+function foldDraw(){
+ if(!foldSim)return;
+ const c=foldCtx,S=foldSim,n=S.n,nodes=S.nodes;
+ foldFit();
+ c.setTransform(foldBaseA,0,0,foldBaseD,0,0);
+ c.clearRect(0,0,FP.W,FP.H);
+ foldTick++;
+ const z=foldViewT.scale;
+
+ c.fillStyle="rgba(90,167,255,.028)";c.fillRect(0,0,FP.W,FP.H);
+
+ /* ---- solvente (no mesmo referencial da molécula: a água também "aproxima") ---- */
+ if(foldShow.water){
+  c.save();foldApplyView(c);
+  const vis=foldToModel(0,0),vis2=foldToModel(FP.W,FP.H);
+  c.lineWidth=1/z;
+  for(const w of foldWater){
+   const wx=w.x+Math.sin(foldTick*.012+w.ph)*3.2,wy=w.y+Math.cos(foldTick*.010+w.ph)*3.2;
+   if(wx<vis.x-20||wx>vis2.x+20||wy<vis.y-20||wy>vis2.y+20)continue;
+   if(foldInsideSurface(wx,wy,1))continue;
+   c.fillStyle="rgba(125,211,252,.34)";
+   c.beginPath();c.arc(wx,wy,2.0,0,Math.PI*2);c.fill();
+   c.strokeStyle="rgba(125,211,252,.15)";
+   c.beginPath();c.arc(wx,wy,4.6,0,Math.PI*2);c.stroke();
+  }
+  c.restore();
+ }
+ c.fillStyle="rgba(159,176,200,.42)";c.font="800 10px system-ui";
+ c.fillText("SOLVENTE AQUOSO",16,FP.H-14);
+
+ /* ---- forma anterior (contorno tracejado) ---- */
+ if(foldShow.ghost&&foldGhost&&foldGhost.lines){
+  c.save();foldApplyView(c);
+  foldStrokeContour(c,foldGhost.lines,2.2,"rgba(203,213,225,.62)",7);
+  c.restore();
+ }
+
+ /* ---- superfície acessível ao solvente ---- */
+ const radii=[];for(let i=0;i<n;i++)radii.push(S.rad[i]+FP.probe);
+ if(foldShow.surface){
+  c.save();foldApplyView(c);
+  const g=c.createLinearGradient(
