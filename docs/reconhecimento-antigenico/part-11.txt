@@ -1,0 +1,106 @@
+rHTML=V.innerHTML="";EPITOPE.forEach((k,i)=>drawNode(L,100,Y[i],k));state.picks.forEach((p,i)=>{if(p)drawNode(R,540,Y[i],p);else R.appendChild(svgEl("circle",{cx:540,cy:Y[i],r:23,fill:"none",stroke:"#61728a","stroke-width":"2","stroke-dasharray":"4 4"}))});state.picks.forEach((p,i)=>{if(!p)return;const it=interaction(EPITOPE[i],p),ln=svgEl("line",{x1:123,y1:Y[i],x2:517,y2:Y[i],stroke:it.color,"stroke-width":it.type==="ionic"?3.5:2.5,"stroke-linecap":"round"});if(["hbond","hydro","vdw","poor"].includes(it.type))ln.setAttribute("stroke-dasharray",it.type==="hbond"?"2 6":it.type==="hydro"?"10 6":"3 7");B.appendChild(ln);const tx=svgEl("text",{x:320,y:Y[i]-10,"text-anchor":"middle",fill:"#a9b9cf","font-size":"9","font-weight":"700"});tx.textContent=it.label;B.appendChild(tx);if(!["repulsion","poor"].includes(it.type))for(let d=0;d<5;d++)V.appendChild(svgEl("circle",{cx:205+d*57,cy:Y[i]+9+(d%2)*4,r:2.2,fill:"var(--vdw)",opacity:".78"}))});updateChemScore()}
+const picker=document.getElementById("picker");EPITOPE.forEach((epi,i)=>{const e=RES[epi],box=document.createElement("div");box.className="contact";box.innerHTML=`<h3><span>Contato ${i+1}</span><span style="color:${e.color}">${e.code} • ${e.prop}</span></h3><div class="epiprop">${e.name}: ${e.detail}. Escolha um resíduo do receptor com propriedade complementar.</div><div class="opts"></div><p class="cfb" id="cfb${i}">Ainda não definido.</p>`;const opts=box.querySelector(".opts"),candidates=[IDEAL[i],i===0?"GLU":i===1?"LEU":i===2?"ARG":i===3?"LYS":"ASP",i===0?"SER":i===1?"ARG":i===2?"SER":i===3?"ASN":"LEU",i===0?"LYS":i===1?"PHE":i===2?"PHE":i===3?"GLU":"SER"].filter((x,idx,a)=>a.indexOf(x)===idx).slice(0,4);candidates.forEach(k=>{const r=RES[k],b=document.createElement("button");b.className="opt";b.dataset.k=k;b.innerHTML=`${r.code}<small>${r.prop}</small>`;b.addEventListener("click",()=>pick(i,k,box));opts.appendChild(b)});picker.appendChild(box)});
+function pick(i,k,box){state.picks[i]=k;box.querySelectorAll(".opt").forEach(b=>b.classList.toggle("sel",b.dataset.k===k));const it=interaction(EPITOPE[i],k),fb=document.getElementById("cfb"+i);fb.className="cfb "+(it.score>=2?"good":"bad");fb.textContent=it.msg;renderChem()}function updateChemScore(){let score=0,filled=0;state.picks.forEach((p,i)=>{if(p){filled++;score+=Math.max(0,interaction(EPITOPE[i],p).score)}});document.getElementById("chemFill").style.width=(score/10*100)+"%";document.getElementById("chemText").textContent=`${filled} de 5 contatos definidos`;document.getElementById("chemScore").textContent=`${score} / 10`;document.getElementById("go4").disabled=filled<5}renderChem();
+
+// v15 — mini-visualizador de solvatação/desolvatação
+const SOLV_COL={charge:"#60a5fa",polar:"#34d399",hydro:"#f6ad55"};
+function solvCircle(g,x,y,r,fill,stroke="#07111f",sw=1.2){g.appendChild(svgEl("circle",{cx:x,cy:y,r:r,fill:fill,stroke:stroke,"stroke-width":sw}))}
+function solvText(g,x,y,txt,fill="#dce9f8",size=10,weight=800){const t=svgEl("text",{x:x,y:y,"text-anchor":"middle",fill:fill,"font-size":size,"font-weight":weight});t.textContent=txt;g.appendChild(t)}
+function renderSolvation(mode="separate"){
+ const W=document.getElementById("solvWater"),M=document.getElementById("solvMolecules"),E=document.getElementById("solvEffects"),R=document.getElementById("solvReadout");
+ if(!W||!M||!E)return;W.innerHTML=M.innerHTML=E.innerHTML="";
+ const sep=mode==="separate"?360:mode==="approach"?190:76, lx=380-sep/2, rx=380+sep/2;
+ // moléculas como duas superfícies simples com três tipos de grupo
+ const ys=[82,150,218], types=["charge","polar","hydro"], labs=["carga","polar","apolar"];
+ M.appendChild(svgEl("path",{d:`M${lx-75} 48 Q${lx-30} 76 ${lx-60} 112 T${lx-55} 180 T${lx-70} 250 L${lx-105} 250 L${lx-105} 48Z`,fill:"#20334d",stroke:"#f6ad55","stroke-width":3}));
+ M.appendChild(svgEl("path",{d:`M${rx+75} 48 Q${rx+30} 76 ${rx+60} 112 T${rx+55} 180 T${rx+70} 250 L${rx+105} 250 L${rx+105} 48Z`,fill:"#20334d",stroke:"#7c8cff","stroke-width":3}));
+ types.forEach((tp,i)=>{solvCircle(M,lx,ys[i],18,SOLV_COL[tp]);solvText(M,lx,ys[i]+3,tp==="charge"?"+":tp==="polar"?"OH":"CH", "#07111f",9,900);solvCircle(M,rx,ys[i],18,SOLV_COL[tp]);solvText(M,rx,ys[i]+3,tp==="charge"?"−":tp==="polar"?"O":"CH", "#07111f",9,900);solvText(M,lx-35,ys[i]+3,labs[i],"#8298b2",8,700);});
+ // solvente de fundo, evitando o interior das superfícies
+ for(let x=25;x<740;x+=32){for(let y=34;y<260;y+=30){if(Math.abs(x-lx)<47||Math.abs(x-rx)<47)continue;if(mode==="contact"&&x>lx+24&&x<rx-24)continue;const jitter=((x+y)%17)-8;solvCircle(W,x+jitter*.35,y+jitter*.15,2.5,"#7dd3fc","none",0);solvCircle(W,x+jitter*.35,y+jitter*.15,5,"none","#7dd3fc",.7);}}
+ // camadas de hidratação mais densas junto a carga e polar
+ [0,1].forEach(i=>{[-1,1].forEach(side=>{const cx=side<0?lx:rx;[-28,-20,20,28].forEach((dx,j)=>{const sign=side<0?1:-1;solvCircle(W,cx+sign*Math.abs(dx),ys[i]+(j-1.5)*9,3,"#7dd3fc","none",0);});});});
+ // água ordenada junto ao apolar quando separado; é liberada durante o contato
+ if(mode!=="contact"){
+   [lx,rx].forEach((cx,idx)=>{const sign=idx===0?1:-1;for(let j=-2;j<=2;j++){solvCircle(W,cx+sign*30,218+j*10,3,"#7dd3fc","none",0);solvCircle(W,cx+sign*30,218+j*10,7,"none","#7dd3fc",1);}});
+ }
+ if(mode==="approach"){
+   const t=svgEl("text",{x:380,y:32,"text-anchor":"middle",fill:"#b9dfff","font-size":10,"font-weight":850});t.textContent="o filme de água entre as superfícies fica menor";E.appendChild(t);
+   E.appendChild(svgEl("line",{x1:350,y1:150,x2:410,y2:150,stroke:"#7dd3fc","stroke-width":2,"stroke-dasharray":"4 5",opacity:.7}));
+ }
+ if(mode==="contact"){
+   // contatos diretos e uma água ponte na região polar
+   [[0,"#60a5fa"],[2,"#f6ad55"]].forEach(([i,c])=>E.appendChild(svgEl("line",{x1:lx+19,y1:ys[i],x2:rx-19,y2:ys[i],stroke:c,"stroke-width":3,"stroke-dasharray":i===2?"9 6":"0"})));
+   solvCircle(E,380,150,5,"#7dd3fc","none",0);E.appendChild(svgEl("line",{x1:lx+18,y1:150,x2:374,y2:150,stroke:"#34d399","stroke-width":2,"stroke-dasharray":"2 5"}));E.appendChild(svgEl("line",{x1:386,y1:150,x2:rx-18,y2:150,stroke:"#34d399","stroke-width":2,"stroke-dasharray":"2 5"}));
+   // setas de água saindo da zona apolar
+   [[380,218,380,260],[365,214,340,258],[395,214,420,258]].forEach(a=>E.appendChild(svgEl("line",{x1:a[0],y1:a[1],x2:a[2],y2:a[3],stroke:"#7dd3fc","stroke-width":2,"marker-end":"url(#solvArrow)",opacity:.8})));
+   solvText(E,380,40,"INTERFACE FORMADA", "#7dd3fc",10,900);
+ }
+ document.querySelectorAll(".solv-btn").forEach(b=>b.classList.toggle("active",b.dataset.solv===mode));
+ if(R)R.innerHTML=mode==="separate"?'<strong>Superfícies separadas:</strong> os grupos estão expostos ao solvente. Cargas e grupos polares apresentam hidratação intensa; a água também se organiza junto a regiões apolares.':mode==="approach"?'<strong>Aproximação:</strong> para as superfícies chegarem à distância de contato, parte da água que ocupava o espaço entre elas precisa se reorganizar. Observe o filme aquoso ficando menor.':'<strong>Interface formada:</strong> parte do solvente foi excluída do contato direto, sobretudo na região apolar; água pode permanecer próxima de grupos polares ou até mediar contatos. Formar a interface envolve um balanço entre desolvatação e novas interações.';
+}
+document.querySelectorAll(".solv-btn").forEach(b=>b.addEventListener("click",()=>renderSolvation(b.dataset.solv)));renderSolvation("separate");
+
+function currentBonds(){return state.picks.map((p,i)=>p?interaction(EPITOPE[i],p):null)}
+function buildTestNetwork(mode="base"){
+      const XS=[130,245,360,475,590], X0=70, X1=650;
+      // As duas superfícies são complementares: a de baixo é o espelho da de cima.
+      // Isso torna a complementaridade de forma visível, em vez de decorativa.
+      function onda(x){ return 16*Math.sin((x-X0)/78) + 7*Math.cos((x-X0)/41); }
+      function ondaDesdobrada(x){ return 20*Math.sin((x-X0)/52 + .9) + 5*Math.cos((x-X0)/33); }
+      const separa = (mode==="distance") ? 34 : 0;
+      const desdobra = (mode==="unfold");
+      function topY(x){ return 90 + (desdobra ? ondaDesdobrada(x) : onda(x)); }
+      function botY(x){ return 270 + onda(x) + separa; }
+      function tracado(f){
+        let d="M"+X0+" "+f(X0).toFixed(1);
+        for(let x=X0+8; x<=X1; x+=8) d+=" L"+x+" "+f(x).toFixed(1);
+        return d;
+      }
+      const elTop=document.getElementById("netTop"), elBot=document.getElementById("netBottom");
+      elTop.setAttribute("d",tracado(topY)); elTop.removeAttribute("transform");
+      elBot.setAttribute("d",tracado(botY)); elBot.removeAttribute("transform");
+
+      const g=document.getElementById("testBonds"), env=document.getElementById("testEnvironment"); g.innerHTML=""; if(env)env.innerHTML="";
+      const bonds=currentBonds();
+      bonds.forEach((it,i)=>{
+        if(!it) return;
+        const x=XS[i], y1=topY(x)+4, y2=botY(x)-4, vao=y2-y1;
+        let opacity=1, color=it.color;
+        if(mode==="salt"     && it.type==="ionic") opacity=.15;
+        if(mode==="detergent"&& it.type==="hydro") opacity=.12;
+        if(mode==="distance") opacity=(it.type==="vdw"||it.type==="hydro")?.08:.35;
+        if(mode==="unfold")   opacity=.16;
+        if(mode==="mutation" && i===3){ color="var(--bad)"; opacity=1; }
+
+        const line=svgEl("line",{x1:x,y1:y1,x2:x,y2:y2,stroke:color,
+          "stroke-width":it.type==="ionic"?4:3,opacity:opacity,"stroke-linecap":"round"});
+        if(["hbond","hydro","vdw"].includes(it.type))
+          line.setAttribute("stroke-dasharray", it.type==="hbond"?"3 7":"9 6");
+        g.appendChild(line);
+
+        // van der Waals só existe a curta distância: os pontos rareiam conforme o vão aumenta
+        if(!["repulsion","poor"].includes(it.type)){
+          const base=(mode==="distance")?.04:(mode==="unfold")?.10:(mode==="detergent"&&it.type==="hydro")?.25:.75;
+          for(let j=0;j<4;j++){
+            const t=.30+j*.135;
+            g.appendChild(svgEl("circle",{cx:x-9+j*6, cy:y1+vao*t, r:2.2, fill:"var(--vdw)", opacity:base}));
+          }
+        }
+      });
+
+      // ---- blindagem iônica: mostrar a causa, não só o efeito ----
+      if(mode==="salt"){
+        bonds.forEach((it,i)=>{
+          if(!it || it.type!=="ionic") return;
+          const x=XS[i], y1=topY(x)+4, y2=botY(x)-4;
+          // A ligação iônica original vira uma silhueta apagada: o aluno vê o que foi perdido.
+          g.appendChild(svgEl("line",{x1:x,y1:y1,x2:x,y2:y2,stroke:it.color,"stroke-width":4,
+            opacity:.12,"stroke-dasharray":"2 6","stroke-linecap":"round"}));
+          // Íons do meio se acumulam ao redor de cada carga: contraíons por cima e por baixo.
+          const nuvem=[
+            {dx:-17,dy:16,s:"−",c:"var(--neg)"},{dx:15,dy:24,s:"−",c:"var(--neg)"},
+            {dx:-13,dy:38,s:"+",c:"var(--pos)"},{dx:19,dy:46,s:"+",c:"var(--pos)"},
+            {dx:-19,dy:-18,s:"+",c:"var(--pos)"},{dx:16,dy:-26,s:"+",c:"var(--pos)"},
+            {dx:-14,dy:-40,s:"−",c:"var(--neg)"},{dx:18,dy:-48,s:"−",c:"var(--neg)"}
+          ];
+         
