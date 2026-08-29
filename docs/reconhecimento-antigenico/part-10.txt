@@ -1,0 +1,118 @@
+
+    }
+    const actionTarget=e.target.closest&&e.target.closest('[data-ag-action]');
+    if(!actionTarget)return;
+    e.preventDefault();
+    const action=actionTarget.dataset.agAction;
+    if(action==='tips')agToggleTips();
+    else if(action==='antibodies')agToggleAntibodies();
+    else if(action==='reset')agResetView();
+  });
+})();
+(function agBindTooltip(){const svg=document.getElementById('ag-main-svg');if(!svg)return;svg.addEventListener('pointerover',e=>{const t=e.target.closest&&e.target.closest('[data-ag-tip]');if(t)agShowTooltip(t.dataset.agTip,e)});svg.addEventListener('pointermove',e=>{const t=e.target.closest&&e.target.closest('[data-ag-tip]');if(t)agShowTooltip(t.dataset.agTip,e)});svg.addEventListener('pointerout',e=>{const from=e.target.closest&&e.target.closest('[data-ag-tip]');const to=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('[data-ag-tip]');if(from&&!to)agHideTooltip()});svg.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('[data-ag-tip]');if(t){agShowTooltip(t.dataset.agTip,e);clearTimeout(agTipTimer);agTipTimer=setTimeout(agHideTooltip,1600)}})})();
+agSetZoomLevel(0);
+
+const epiPts=[0,32,-13,42,-31,20,-4,28,0],receptorSets={A:{name:"Receptor A",desc:"superfície quase plana",pts:[5,3,4,2,5,4,3,5,4]},B:{name:"Receptor B",desc:"perfil complementar: saliências ↔ reentrâncias",pts:[1,-29,15,-39,32,-18,5,-25,2]},C:{name:"Receptor C",desc:"forma semelhante ao epítopo",pts:[0,27,-8,35,-25,15,-3,22,1]}};
+function pathSurface(points,yBase,top){const xs=points.map((_,i)=>70+i*(580/(points.length-1)));let d=`M ${xs[0]} ${yBase+(top?points[0]:-points[0])}`;for(let i=1;i<points.length;i++)d+=` L ${xs[i]} ${yBase+(top?points[i]:-points[i])}`;if(top)d+=` L 650 35 L 70 35 Z`;else d+=` L 650 355 L 70 355 Z`;return d}
+document.getElementById("epiShape").setAttribute("d",pathSurface(epiPts,105,true));document.getElementById("paraShape").setAttribute("d",pathSurface(receptorSets.A.pts,285,false));const receptors=document.getElementById("receptors");Object.entries(receptorSets).forEach(([k,r])=>receptors.insertAdjacentHTML("beforeend",`<button class="receptor" data-r="${k}"><b>${r.name}</b><p>${r.desc}</p></button>`));receptors.addEventListener("click",e=>{const b=e.target.closest(".receptor");if(!b)return;document.querySelectorAll(".receptor").forEach(x=>x.classList.remove("pick"));b.classList.add("pick");state.shape=b.dataset.r;renderFit(state.shape)});
+const DMIN=14, EPIY=epiPts.map(v=>105+v);
+    // Encaixe rígido: o parátopo desce até encostar. Duas superfícies sólidas não se atravessam,
+    // então a distância final é ditada pelo ponto que bloqueia primeiro.
+    function dockBase(k){const p=receptorSets[k].pts;return Math.max(...EPIY.map((y,i)=>y+p[i]))+DMIN}
+    function fitStats(k){
+      const p=receptorSets[k].pts, base=dockBase(k);
+      const gaps=EPIY.map((y,i)=>(base-p[i])-y);
+      const close=gaps.filter(g=>g<=DMIN+4).length;
+      const voids=gaps.filter(g=>g>40).length;
+      const mean=gaps.reduce((a,b)=>a+b,0)/gaps.length;
+      // "colisões" = pontos que se atravessariam caso a superfície fosse trazida
+      // à distância de contato útil. É o que a figura fantasma mostra.
+      const ideal=Math.round(EPIY.reduce((a,y,i)=>a+y+p[i],0)/EPIY.length)+DMIN;
+      const crashes=EPIY.filter((y,i)=>((ideal-p[i])-y)<0).length;
+      const fit=Math.max(12,Math.min(99,Math.round(100-(mean-DMIN)*1.9-crashes*6)));
+      return{gaps,base,ideal,mean,crashes,close,voids,fit,diffs:gaps};
+    }
+function renderFit(k){
+      const p=receptorSets[k].pts, s=fitStats(k);
+      const xs=EPIY.map((_,i)=>70+i*(580/(EPIY.length-1)));
+      const paraY=EPIY.map((y,i)=>s.base-p[i]);
+      document.getElementById("paraShape").setAttribute("d",pathSurface(p,s.base,false));
+
+      const ib=document.getElementById("interfaceBand"),
+            cg=document.getElementById("collisionMarks"),
+            gg=document.getElementById("gapMarks"),
+            ct=document.getElementById("shapeContacts");
+      ib.innerHTML=cg.innerHTML=gg.innerHTML=ct.innerHTML="";
+
+      // faixa de interface: trechos em que as superfícies estão próximas o bastante
+      // para que vários átomos possam contribuir para o contato.
+      let band="";
+      for(let i=0;i<xs.length-1;i++){
+        if(s.gaps[i]<=30 || s.gaps[i+1]<=30){
+          band+=`<polygon points="${xs[i]},${EPIY[i]} ${xs[i+1]},${EPIY[i+1]} ${xs[i+1]},${paraY[i+1]} ${xs[i]},${paraY[i]}" fill="#38bdf8" opacity=".13"/>`;
+        }
+      }
+      if(s.close>0) band+=`<text x="360" y="188" text-anchor="middle" font-size="10" font-weight="850" fill="#7dd3fc">FAIXA AZUL = INTERFACE DE CONTATO</text>`;
+      ib.innerHTML=band;
+
+      // vazios: área sombreada entre as duas superfícies, não um tracinho solto
+      let poly="";
+      for(let i=0;i<xs.length-1;i++){
+        if(s.gaps[i]>34 && s.gaps[i+1]>34){
+          poly+=`<polygon points="${xs[i]},${EPIY[i]} ${xs[i+1]},${EPIY[i+1]} ${xs[i+1]},${paraY[i+1]} ${xs[i]},${paraY[i]}"
+                   fill="#f6bd4a" opacity=".13"/>`;
+        }
+      }
+      s.gaps.forEach((g,i)=>{
+        if(g>40){
+          const ym=(EPIY[i]+paraY[i])/2;
+          poly+=`<line x1="${xs[i]}" y1="${EPIY[i]+4}" x2="${xs[i]}" y2="${paraY[i]-4}"
+                   stroke="#f6bd4a" stroke-width="1.4" stroke-dasharray="3 4" opacity=".75"/>
+                 <text x="${xs[i]}" y="${ym+3}" text-anchor="middle" font-size="9" fill="#f6bd4a">${Math.round(g/12)} Å</text>`;
+        }
+      });
+      gg.innerHTML=poly;
+
+      // contatos: entre os pontos reais das superfícies
+      let cts="";
+      s.gaps.forEach((g,i)=>{
+        if(g<=DMIN+4){
+          cts+=`<line x1="${xs[i]}" y1="${EPIY[i]+3}" x2="${xs[i]}" y2="${paraY[i]-3}"
+                  stroke="#e9d5ff" stroke-width="2" stroke-dasharray="2 4"/>
+                <circle cx="${xs[i]}" cy="${(EPIY[i]+paraY[i])/2}" r="3.2" fill="#e9d5ff"/>`;
+        }
+      });
+      ct.innerHTML=cts;
+
+      // colisões: silhueta fantasma na posição de contato útil, com as sobreposições em vermelho
+      if(s.crashes>0){
+        let gh=`<path d="${pathSurface(p,s.ideal,false)}" fill="none" stroke="#fb7185"
+                  stroke-width="1.6" stroke-dasharray="6 4" opacity=".8"/>`;
+        const gy=EPIY.map((y,i)=>s.ideal-p[i]);
+        for(let i=0;i<xs.length-1;i++){
+          const o1=gy[i]-EPIY[i], o2=gy[i+1]-EPIY[i+1];
+          if(o1<0||o2<0){
+            gh+=`<polygon points="${xs[i]},${EPIY[i]} ${xs[i+1]},${EPIY[i+1]} ${xs[i+1]},${gy[i+1]} ${xs[i]},${gy[i]}"
+                   fill="#fb7185" opacity=".26"/>`;
+          }
+        }
+        EPIY.forEach((y,i)=>{
+          if(gy[i]-y<0){
+            const ym=(y+gy[i])/2;
+            gh+=`<circle cx="${xs[i]}" cy="${ym}" r="11" fill="none" stroke="#fb7185" stroke-width="2.4"/>
+                 <path d="M${xs[i]-6} ${ym-6}l12 12M${xs[i]+6} ${ym-6}l-12 12" stroke="#fb7185" stroke-width="2.4"/>`;
+          }
+        });
+        gh+=`<text x="660" y="${s.ideal-6}" text-anchor="end" font-size="9.5" fill="#fb7185">posição necessária para contato — impossível</text>`;
+        cg.innerHTML=gh;
+      }
+
+      document.getElementById("mFit").textContent=s.fit+"%";
+      document.getElementById("mCrash").textContent=s.crashes;
+      document.getElementById("mClose").textContent=s.close;
+      const ff=document.getElementById("fitFeedback");ff.className="feedback show";
+      if(k==="B"){ff.classList.add("good");ff.innerHTML="<strong>Melhor encaixe.</strong> Há poucos vazios e vários pontos de proximidade simultâneos. Isso não garante afinidade sozinho — ainda precisamos verificar a química.";document.getElementById("fitCaption").textContent="o parátopo desce até encostar: vão fino e uniforme nos 9 pontos";document.getElementById("shapeExplain").innerHTML="<strong>Chave–fechadura:</strong> saliências de uma superfície correspondem a reentrâncias da outra. Essa complementaridade geométrica aumenta a área de contato e permite que diversas interações de curtíssimo alcance ocorram ao mesmo tempo. É exatamente aqui que van der Waals começa a importar.";document.getElementById("go3").disabled=false}else if(k==="A"){ff.classList.add("bad");ff.innerHTML="<strong>Encaixa parcialmente, mas sobra espaço.</strong> Uma superfície plana deixa vários grupos distantes demais. Poucos contatos próximos significam pouca soma de forças fracas.";document.getElementById("fitCaption").textContent="grandes lacunas reduzem a área de contato"}else{ff.classList.add("bad");ff.innerHTML="<strong>As formas se parecem, mas isso é ruim.</strong> Saliência diante de saliência gera colisão estérica. Complementaridade significa formas opostas que se acomodam.";document.getElementById("fitCaption").textContent="colisões estéricas impedem aproximação"}}
+const atlasKeys=["ASP","ARG","SER","ASN","LEU","PHE","LYS","GLU"];document.getElementById("aaAtlas").innerHTML=atlasKeys.map(k=>{const r=RES[k];return`<div class="aa"><div class="sym" style="background:${r.color}">${r.icon}</div><b>${r.code} — ${r.name}</b><span>${r.prop}<br>${r.detail}</span></div>`}).join("");
+function interaction(a,b){const A=RES[a],B=RES[b];if((A.cls==="neg"&&B.cls==="pos")||(A.cls==="pos"&&B.cls==="neg"))return{type:"ionic",score:2,label:"eletrostática",msg:"Cargas opostas: interação eletrostática favorável.",color:"var(--blue)"};if((A.cls==="neg"&&B.cls==="neg")||(A.cls==="pos"&&B.cls==="pos"))return{type:"repulsion",score:-1,label:"repulsão",msg:"Cargas de mesmo sinal: aproximação desfavorável.",color:"var(--bad)"};if(["polar","neg","pos"].includes(A.cls)&&["polar","neg","pos"].includes(B.cls))return{type:"hbond",score:2,label:"ponte de H",msg:"Grupos polares compatíveis podem formar ponte de hidrogênio quando bem orientados.",color:"var(--polar)"};if(["apolar","arom"].includes(A.cls)&&["apolar","arom"].includes(B.cls)){if(A.cls==="arom"&&B.cls==="arom")return{type:"vdw",score:2,label:"contato aromático + vdW",msg:"Superfícies aromáticas próximas oferecem ampla área para dispersão/van der Waals; o ambiente apolar também favorece o contato.",color:"var(--vdw)"};return{type:"hydro",score:2,label:"hidrofóbica",msg:"Superfícies apolares compatíveis favorecem exclusão de água e contato íntimo.",color:"var(--apolar)"}}return{type:"poor",score:0,label:"contato ruim",msg:"As propriedades não se complementam bem neste ponto de contato.",color:"#687a91"}}
+function svgEl(n,attrs){const e=document.createElementNS("http://www.w3.org/2000/svg",n);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e}function drawNode(g,x,y,k){const r=RES[k],c=svgEl("circle",{cx:x,cy:y,r:23,fill:r.color,stroke:"rgba(0,0,0,.35)","stroke-width":"1.5"}),t=svgEl("text",{x:x,y:y+4,"text-anchor":"middle",fill:"#07111f","font-size":"12","font-weight":"900"});t.textContent=r.code;g.append(c,t)}
+function renderChem(){const L=document.getElementById("leftNodes"),R=document.getElementById("rightNodes"),B=document.getElementById("bondLines"),V=document.getElementById("vdwDots");L.innerHTML=R.innerHTML=B.inne
