@@ -1,0 +1,83 @@
+ue em <strong>Destacar epítopo</strong>.</div>
+      <div class="pdb-note"><strong>Como reconhecer a interface no 3D:</strong> primeiro veja as <strong>duas superfícies encostadas</strong>; depois use “Zoom na interface” e “Átomos da interface”. <strong>Epítopo</strong> = lado do antígeno; <strong>parátopo</strong> = lado do Fab; <strong>interface</strong> = os dois lados que ficam próximos. Só depois compare os segmentos 18–27 e 117–125 na estrutura dobrada.</div>
+      <div class="pdb-group" id="pdbResidueBox"><h3>Resíduos do epítopo publicado</h3><p id="pdbResidueList">A lista será preenchida a partir do próprio arquivo PDB após o carregamento.</p></div>
+      <div class="pdb-question"><b>Teste rápido</b><p>Se os resíduos 18–27 e 117–125 estão distantes na sequência, como podem formar juntos um único epítopo?</p><div class="pdb-qbuttons"><button class="pdb-btn" data-pdbq="sequence">Eles ficaram vizinhos na sequência</button><button class="pdb-btn" data-pdbq="fold">A dobra 3D os aproximou</button></div><div class="pdb-qfeedback" id="pdbQFeedback"></div></div>
+      <div class="nav" style="margin-top:0"><button class="btn" data-back="6">← Dobramento do peptídeo</button></div>
+    </aside>
+  </div>
+  <div class="card pad" style="margin-top:14px"><div class="kicker">Do modelo para a molécula real</div><div class="summary-grid"><div class="summary"><b>Chave–fechadura</b><p>A interface ocupa uma superfície tridimensional; não é uma ligação entre dois pontos.</p></div><div class="summary"><b>Química</b><p>Grupos químicos só interagem quando a dobra e o encaixe os posicionam próximos e orientados.</p></div><div class="summary"><b>Forças fracas</b><p>Pontes de H, van der Waals, água interfacial e outras contribuições somam-se sobre a área de contato.</p></div></div></div>
+<div class="card pad" style="margin-top:14px">
+    <div class="kicker">Síntese do aluno</div>
+    <div class="field"><label for="studentName">Nome</label><input id="studentName" placeholder="Nome completo"></div>
+    <div class="field"><label for="answer1">Por que uma boa complementaridade de forma não garante, sozinha, alta afinidade?</label><textarea id="answer1"></textarea></div>
+    <div class="field"><label for="answer2">Diferencie afinidade e avidez usando os exemplos desta atividade.</label><textarea id="answer2"></textarea></div>
+    <div class="nav"><button class="btn" data-back="6">← Voltar</button><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn good" id="makeReport" disabled>Gerar relatório / PDF</button></div></div>
+  </div>
+</section>
+
+<div id="report"><h2>Relatório — Reconhecimento antigênico</h2><p id="repWho"></p><div class="repgrid" id="repGrid"></div><table id="repContacts"></table><div class="repitem" style="margin-top:12px"><b>Chave–fechadura: utilidade e limite</b><span id="repA1"></span></div><div class="repitem" style="margin-top:8px"><b>Por que muitas forças fracas funcionam</b><span id="repA2"></span></div></div>
+</main>
+<script>
+(function(){"use strict";
+const RES={ASP:{code:"Asp",name:"aspartato",cls:"neg",prop:"carga −",detail:"carboxilato ionizado",color:"var(--neg)",icon:"−"},ARG:{code:"Arg",name:"arginina",cls:"pos",prop:"carga +",detail:"guanidínio ionizado",color:"var(--pos)",icon:"+"},SER:{code:"Ser",name:"serina",cls:"polar",prop:"polar",detail:"grupo –OH",color:"var(--polar)",icon:"OH"},ASN:{code:"Asn",name:"asparagina",cls:"polar",prop:"polar",detail:"grupo amida",color:"var(--polar)",icon:"CONH"},LEU:{code:"Leu",name:"leucina",cls:"apolar",prop:"apolar",detail:"cadeia alifática",color:"var(--apolar)",icon:"CH"},PHE:{code:"Phe",name:"fenilalanina",cls:"arom",prop:"aromático apolar",detail:"anel fenila",color:"var(--arom)",icon:"⌬"},LYS:{code:"Lys",name:"lisina",cls:"pos",prop:"carga +",detail:"grupo amino",color:"var(--pos)",icon:"+"},GLU:{code:"Glu",name:"glutamato",cls:"neg",prop:"carga −",detail:"carboxilato ionizado",color:"var(--neg)",icon:"−"}};
+const POOL=["ARG","ASP","ASN","SER","LEU","PHE","LYS","GLU"],EPITOPE=["ASP","SER","LEU","ARG","PHE"],IDEAL=["ARG","ASN","LEU","ASP","PHE"],Y=[72,165,258,351,444];
+let state={stage:1,scalePhase:1,antigenOK:false,epitopeOK:false,shape:null,picks:[null,null,null,null,null],tests:{},started:Date.now()};
+function goto(n){state.stage=n;document.querySelectorAll(".stage").forEach(s=>s.classList.toggle("active",s.id==="s"+n));document.querySelectorAll(".step").forEach(el=>{const i=+el.dataset.step;el.classList.toggle("on",i===n);el.classList.toggle("done",i<n)});document.getElementById("progressMini").textContent=`Etapa ${n} de 7`;window.scrollTo({top:0,behavior:"smooth"})}
+document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",()=>goto(+b.dataset.back)));document.getElementById("go2").addEventListener("click",()=>goto(2));document.getElementById("go3").addEventListener("click",()=>goto(3));document.getElementById("go4").addEventListener("click",()=>{buildTestNetwork();goto(4)});
+const sf=document.getElementById("scaleFeedback");
+let agCurrentZoom=0,agCurrentVB=[0,0,1200,800],agTargetVB=[0,0,1200,800],agAnim=null,agAntibodies=false,agTips=true,agTipTimer=null;
+const agZoomBoxes={0:[0,0,1200,800],1:[540,175,120,90],2:[582,198,36,27]};
+const agContent={
+  0:{title:"Bacilo — visão geral celular",text:"A superfície bacteriana apresenta múltiplas moléculas antigênicas. O sistema imune não reconhece a célula inteira por uma única ligação molecular.",badge:"NÍVEL 0 · BACILO COMPLETO",scale:"µm"},
+  1:{title:"Antígeno de superfície",text:"Agora uma única macromolécula antigênica ocupa o campo. Ela contém diferentes regiões; apenas parte de sua superfície participa do reconhecimento por um determinado receptor.",badge:"NÍVEL 1 · ANTÍGENO",scale:"10–15 nm"},
+  2:{title:"Epítopo — determinante antigênico",text:"O epítopo é a região do antígeno que efetivamente entra em contato com o parátopo. Nesta ampliação aparecem resíduos superficiais que compõem o sítio reconhecido.",badge:"NÍVEL 2 · EPÍTOPO",scale:"1–2 nm"}
+};
+function agSetZoomLevel(level){
+  agCurrentZoom=level;agTargetVB=[...agZoomBoxes[level]];
+  document.querySelectorAll('.ag-zoom-btn').forEach(b=>b.classList.toggle('active',+b.dataset.agLevel===level));
+  const ret=document.getElementById('focus-reticle'),detail=document.getElementById('epitope-residues-detail'),hit=document.getElementById('ag-epitope-hit');
+  if(ret)ret.setAttribute('opacity',level===0?'0.7':'0');
+  if(detail)detail.setAttribute('opacity',level===2?'1':'0');
+  if(hit)hit.style.pointerEvents=level>=1?'all':'none';
+  const d=agContent[level];document.getElementById('agCaptionTitle').textContent=d.title;document.getElementById('agCaptionText').textContent=d.text;document.getElementById('agLevelBadge').textContent=d.badge;document.getElementById('agScaleMetric').textContent=d.scale;const zf=document.getElementById('agZoomFactor');if(zf)zf.textContent=level===0?'visão celular (~µm)':level===1?'~100× mais próximo (de µm para dezenas de nm)':'~1000× mais próximo (ordem de nm)';
+  document.getElementById('agHint').innerHTML=level===0?'Clique em qualquer <strong>antígeno rosa</strong> da superfície para aproximar.':level===1?'Agora clique na <strong>região verde do topo</strong> para chegar ao epítopo.':'Epítopo ampliado: volte pelos botões superiores quando quiser comparar as escalas.';
+  agUpdateAntibodies();agRegisterLearning(level);
+  if(!agAnim)agAnimateViewBox();
+}
+function agAnimateViewBox(){
+  let diff=0;for(let i=0;i<4;i++){agCurrentVB[i]+=(agTargetVB[i]-agCurrentVB[i])*.10;diff+=Math.abs(agTargetVB[i]-agCurrentVB[i]);}
+  const svg=document.getElementById('ag-main-svg');if(svg)svg.setAttribute('viewBox',agCurrentVB.join(' '));
+  if(diff>.05)agAnim=requestAnimationFrame(agAnimateViewBox);else{agCurrentVB=[...agTargetVB];if(svg)svg.setAttribute('viewBox',agCurrentVB.join(' '));agAnim=null;}
+}
+function agRegisterLearning(level){
+  if(level===1&&state.scalePhase===1){
+    state.antigenOK=true;state.scalePhase=2;document.getElementById('scaleCount').textContent='Interação 2 de 2';document.getElementById('scaleQuestion').textContent='Agora clique diretamente no epítopo do antígeno ampliado.';document.getElementById('scaleInstruction').textContent='Procure a pequena região verde exposta no topo da molécula.';sf.className='feedback show good';sf.innerHTML='<strong>Isso.</strong> A bactéria é a fonte de muitas moléculas antigênicas; o antígeno é a macromolécula que pode conter diferentes determinantes reconhecíveis.';
+  }else if(level===2&&state.scalePhase===2){
+    state.epitopeOK=true;sf.className='feedback show good';sf.innerHTML='<strong>Exato.</strong> Você saiu da escala celular, isolou uma molécula antigênica e então localizou a região que efetivamente participa do reconhecimento: o epítopo.';const go=document.getElementById('go2');go.disabled=false;go.textContent='Continuar: testar o encaixe →';
+  }else if(level===2&&state.scalePhase===1){
+    sf.className='feedback show';sf.innerHTML='<strong>Você chegou ao epítopo.</strong> Ele é realmente a região de reconhecimento, mas volte um nível e identifique primeiro a molécula antigênica para completar a sequência de escalas.';
+  }
+}
+function agToggleAntibodies(){agAntibodies=!agAntibodies;document.getElementById('agAbToggle').textContent=agAntibodies?'Remover IgG':'Simular IgG';agUpdateAntibodies();}
+function agUpdateAntibodies(){
+  const p=document.getElementById('primary-antibody'),s=document.getElementById('secondary-antibodies');if(!p||!s)return;
+  if(agAntibodies){p.setAttribute('transform','translate(600, 173) rotate(180)');p.style.opacity='1';s.style.opacity=agCurrentZoom===0?'1':'0';}
+  else{p.setAttribute('transform','translate(600, -80) rotate(180)');p.style.opacity='0';s.style.opacity='0';}
+}
+function agToggleTips(){agTips=!agTips;document.getElementById('agTipToggle').textContent=agTips?'Rótulos: tooltip':'Exibir rótulos';if(!agTips)agHideTooltip();}
+function agShowTooltip(text,e){if(!agTips||!text)return;const box=document.getElementById('agCanvas'),tip=document.getElementById('agTooltip'),r=box.getBoundingClientRect();tip.textContent=text;tip.classList.add('show');let x=e.clientX-r.left+12,y=e.clientY-r.top+12;requestAnimationFrame(()=>{const tw=tip.offsetWidth,th=tip.offsetHeight;x=Math.min(Math.max(8,x),r.width-tw-8);y=Math.min(Math.max(8,y),r.height-th-8);tip.style.left=x+'px';tip.style.top=y+'px';});}
+function agHideTooltip(){const t=document.getElementById('agTooltip');if(t)t.classList.remove('show');}
+function agResetView(){if(agAntibodies)agToggleAntibodies();agSetZoomLevel(0);}
+(function agBindControls(){
+  const explorer=document.getElementById('agExplorer');
+  if(!explorer)return;
+  explorer.addEventListener('click',e=>{
+    const levelTarget=e.target.closest&&e.target.closest('[data-ag-click-level]');
+    if(levelTarget){
+      const level=Number(levelTarget.dataset.agClickLevel);
+      if(Number.isFinite(level)){
+        e.preventDefault();
+        e.stopPropagation();
+        agSetZoomLevel(level);
+      }
+      return;
