@@ -1,0 +1,69 @@
+>As cadeias leve e pesada contribuem juntas para a superfície do parátopo.');
+ }else if(mode==="surface"){
+   pdbViewer.addSurface($3Dmol.SurfaceType.VDW,{opacity:.60,color:"#f6ad55"},ag);
+   pdbViewer.addSurface($3Dmol.SurfaceType.VDW,{opacity:.40,color:"#7c8cff"},ab);
+   pdbViewer.zoomTo({});
+   setPdbInfo('<strong>Superfícies moleculares.</strong><br>Esta representação aproxima melhor a ideia de chave–fechadura: complementaridade significa superfícies que se acomodam em uma área de contato.');
+ }else if(mode==="epitope"){ pdbViewer.setStyle({},{}); pdbViewer.setStyle(ag,{cartoon:{color:"#f59e0b"}}); pdbViewer.setStyle(epi,{cartoon:{color:"#fb7185"},stick:{color:"#fb7185",radius:.20}});
+   showEpitopeLabels();
+   pdbViewer.zoomTo(epi,700);
+   setPdbInfo('<strong>Epítopo publicado — somente o lado do antígeno.</strong><br>Os resíduos <span class="mono">18–27</span> e <span class="mono">117–125</span> da lisozima estão em rosa e identificados individualmente. Eles constituem dois segmentos separados na sequência, aproximados pela dobra 3D.');
+ }else if(mode==="interface"){
+   const iAg=interfaceAgSel();
+   pdbViewer.setStyle(epi,{stick:{color:"#fb7185",radius:.18}});
+   pdbViewer.setStyle(iAg,{stick:{color:"#ff9aa9",radius:.20}});
+   pdbViewer.setStyle(iface,{stick:{colorscheme:"whiteCarbon",radius:.18}});
+   pdbViewer.zoomTo({or:[iAg,iface]},800);
+   setPdbInfo('<strong>Interface em detalhe — os dois lados.</strong><br>Em rosa estão os átomos/resíduos da lisozima próximos do Fab; em sticks claros estão os resíduos do parátopo a até 4,5 Å. <strong>Interface = epítopo + parátopo em contato.</strong>');
+ }
+ pdbViewer.render();
+}
+function style3D(mode){
+ if(!pdbReady)return;mark3d("style",mode);
+ const epi=epitopeSel(),iface=interfaceAbSel(),iAg=interfaceAgSel();
+ if(mode==="cartoon")view3D("complex");
+ else if(mode==="epires"){
+   basePdbStyle();
+   pdbViewer.setStyle(epi,{stick:{color:"#fb7185",radius:.22},sphere:{color:"#fb7185",scale:.17}});
+   showEpitopeLabels();
+   pdbViewer.zoomTo(epi,700);pdbViewer.render();
+   setPdbInfo('<strong>Resíduos do epítopo.</strong><br>Esta visualização mostra especificamente os resíduos da lisozima nos segmentos <span class="mono">18–27</span> e <span class="mono">117–125</span>, cada um com seu nome e número. Eles pertencem ao <strong>antígeno</strong>, não ao anticorpo.');
+ }else if(mode==="interfaceatoms"){
+   basePdbStyle();
+   pdbViewer.setStyle(iAg,{sphere:{color:"#fb7185",scale:.30},stick:{color:"#fb7185",radius:.10}});
+   pdbViewer.setStyle(iface,{sphere:{colorscheme:"whiteCarbon",scale:.25},stick:{colorscheme:"whiteCarbon",radius:.10}});
+   pdbViewer.zoomTo({or:[iAg,iface]},700);pdbViewer.render();
+   setPdbInfo('<strong>Átomos da interface.</strong><br>Aqui sim estão sendo mostrados os dois lados que se aproximam a até 4,5 Å: átomos do <strong>epítopo</strong> no antígeno e átomos do <strong>parátopo</strong> no Fab. Esta é a representação correta para discutir contatos atômicos e van der Waals.');
+ }
+}
+function initPDBViewer(){
+ if(pdbReady){try{pdbViewer.resize();pdbViewer.render()}catch(e){}return}
+ const loading=document.getElementById("pdbLoading");
+ if(typeof $3Dmol==="undefined"){
+   loading.innerHTML='<div><strong>Visualizador 3D indisponível.</strong><br><span style="color:#7f93ad">Esta etapa requer internet para carregar a biblioteca 3Dmol.js.</span></div>';return;
+ }
+ try{
+   pdbViewer=$3Dmol.createViewer("pdbViewer",{backgroundColor:"#06101c",antialias:true});
+   $3Dmol.download("pdb:1FDL",pdbViewer,{doAssembly:false},function(){
+     const detected=detectPdbChains();
+     if(!detected.atoms){
+       loading.innerHTML='<div><strong>O arquivo PDB foi recebido, mas nenhum átomo foi reconhecido.</strong></div>';return;
+     }
+     updateEpitopeResidueList();
+     pdbReady=true;basePdbStyle();pdbViewer.resize();pdbViewer.zoomTo({});pdbViewer.render();loading.classList.add("hide");
+     setPdbInfo('<strong>Estrutura carregada.</strong><br>PDB <span class="mono">1FDL</span>: '+detected.atoms+' átomos reconhecidos. Cadeias do arquivo: <span class="mono">'+detected.chains.join(", ")+'</span>.<br><br>Gire o complexo e depois selecione <strong>Destacar epítopo</strong>.');
+   });
+   setTimeout(()=>{if(!pdbReady)loading.innerHTML='<div><strong>A estrutura está demorando para carregar.</strong><br><span style="color:#7f93ad">Verifique a conexão. O restante da atividade continua funcionando.</span></div>'},12000);
+ }catch(err){loading.innerHTML='<div><strong>Falha ao iniciar o visualizador.</strong><br><span style="color:#7f93ad">'+String(err.message||err)+'</span></div>'}
+}
+document.querySelectorAll("[data-view3d]").forEach(b=>b.addEventListener("click",()=>view3D(b.dataset.view3d)));
+document.querySelectorAll("[data-style3d]").forEach(b=>b.addEventListener("click",()=>style3D(b.dataset.style3d)));
+document.getElementById("pdbReset").addEventListener("click",()=>{if(pdbReady){basePdbStyle();pdbViewer.zoomTo({});pdbViewer.render();setPdbInfo("<strong>Orientação resetada.</strong><br>Use <strong>Epítopo publicado</strong> para ver os resíduos identificados e <strong>Átomos da interface</strong> para ver epítopo + parátopo.");}});
+document.querySelectorAll("[data-pdbq]").forEach(b=>b.addEventListener("click",()=>{const ok=b.dataset.pdbq==="fold";document.getElementById("pdbQFeedback").innerHTML=ok?'<span style="color:#6ee7b7"><strong>Isso.</strong> A estrutura terciária aproximou segmentos distantes na sequência e criou um epítopo descontínuo.</span>':'<span style="color:#fda4af">Não. Eles continuam separados na sequência primária; é a dobra tridimensional que os aproxima.</span>'}));
+
+const nm=document.getElementById("studentName"),a1=document.getElementById("answer1"),a2=document.getElementById("answer2");[nm,a1,a2].forEach(x=>x.addEventListener("input",checkReport));function checkReport(){document.getElementById("makeReport").disabled=!(nm.value.trim().length>2&&a1.value.trim().length>35&&a2.value.trim().length>35&&Object.keys(state.tests).length>=3)}
+document.getElementById("makeReport").addEventListener("click",()=>{const mins=Math.max(1,Math.round((Date.now()-state.started)/60000)),now=new Date();document.getElementById("repWho").textContent=`${nm.value.trim()} • ${now.toLocaleString("pt-BR")} • ${mins} min`;const shape=state.shape?fitStats(state.shape):null;let chem=0;state.picks.forEach((p,i)=>{if(p)chem+=Math.max(0,interaction(EPITOPE[i],p).score)});const fm=foldMetrics(),foldChanges=foldSeq.filter((a,i)=>a!==FOLD_ORIGINAL[i]).length;document.getElementById("repGrid").innerHTML=[["Antígeno/epítopo",state.antigenOK&&state.epitopeOK?"identificados":"incompleto"],["Complementaridade de forma",shape?`${shape.fit}% • ${shape.crashes} colisão(ões)`:"—"],["Complementaridade química",`${chem}/10 • ${Object.keys(state.tests).length} testes executados`],["Dobramento do peptídeo",`${foldChanges} substituição(ões) • ${fm.ss} ponte(s) S–S • estabilidade relativa ${fm.stab}%`]].map(x=>`<div class="repitem"><b>${x[0]}</b><span>${x[1]}</span></div>`).join("");let rows="<tr><th>Contato</th><th>Epítopo</th><th>Parátopo</th><th>Interação dominante</th><th>van der Waals</th></tr>";state.picks.forEach((p,i)=>{const it=interaction(EPITOPE[i],p);rows+=`<tr><td>${i+1}</td><td>${RES[EPITOPE[i]].code} (${RES[EPITOPE[i]].prop})</td><td>${RES[p].code} (${RES[p].prop})</td><td>${it.label}</td><td>${["repulsion","poor"].includes(it.type)?"desfavorável/ausente":"microcontatos por proximidade"}</td></tr>`});document.getElementById("repContacts").innerHTML=rows;document.getElementById("repA1").textContent=a1.value.trim();document.getElementById("repA2").textContent=a2.value.trim();document.getElementById("report").style.display="block";window.print()});
+})();
+</script>
+</body>
+</html>
