@@ -1,0 +1,119 @@
+ada de peptidoglicano" />
+
+                    <!-- MEMBRANA PLASMÁTICA (Cytoplasmic Membrane) - Cyan Bilayer -->
+                    <rect x="280" y="280" width="640" height="240" rx="120" ry="120" fill="url(#cytoplasm-grad)" stroke="#06b6d4" stroke-width="6" data-ag-tip="Membrana plasmática — bicamada lipídica interna" />
+
+                    <!-- Inner Membrane Lipids Representation Texture -->
+                    <rect x="284" y="284" width="632" height="232" rx="116" ry="116" fill="none" stroke="url(#membrane-pattern)" stroke-width="10" opacity="0.75" />
+
+                    <!-- CYTOPLASM CONTENTS (Nucleoid DNA loop & Ribosomes) -->
+                    <g id="cytoplasm-contents" opacity="0.45">
+                        <!-- DNA Chromosome Chromatin loop -->
+                        <path d="M 360,400 Q 420,330 500,420 T 640,360 T 760,430 T 840,380" stroke="#38bdf8" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#glow-subtle)" />
+                        <path d="M 380,380 Q 460,450 540,350 T 700,420 T 800,350" stroke="#818cf8" stroke-width="3.5" fill="none" stroke-linecap="round" />
+                        <!-- Ribosomes -->
+                        <circle cx="340" cy="350" r="3.5" fill="#cbd5e1" />
+                        <circle cx="410" cy="450" r="4" fill="#cbd5e1" />
+                        <circle cx="470" cy="330" r="3.5" fill="#cbd5e1" />
+                        <circle cx="600" cy="460" r="4" fill="#cbd5e1" />
+                        <circle cx="720" cy="330" r="3.5" fill="#cbd5e1" />
+                        <circle cx="800" cy="450" r="3.5" fill="#cbd5e1" />
+                    </g>
+
+                    <!-- SURFACE ANTIGENS (All uniform size, aligned perpendicular to cell wall curve) -->
+                    <g id="surface-antigens-layer">
+                        <!-- Top Wall Antigens (pointing straight UP, rotate 0°) -->
+                        <g transform="translate(420, 260)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        <g transform="translate(510, 260)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        
+                        <!-- TARGET MAIN ANTIGEN (Top Center at (600, 260)) -->
+                        <g id="target-antigen-interactive" transform="translate(600, 260)" class="cursor-pointer glow-antigen" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar">
+                            <use href="#master-antigen-symbol" />
+                            <circle id="ag-epitope-hit" cx="0" cy="-50" r="16" fill="transparent" stroke="transparent" style="pointer-events:none;cursor:pointer" data-ag-tip="Epítopo — região do antígeno reconhecida pelo parátopo" data-ag-click-level="2" />
+                            
+                            <!-- Detailed Chemical residue annotations for Level 2 Zoom -->
+                            <g id="epitope-residues-detail" opacity="0" class="transition-opacity duration-500" style="pointer-events:none">
+                                <path d="M -12,-48 C -6,-58 0,-42 6,-58" stroke="#ffffff" stroke-width="0.8" fill="none" stroke-dasharray="1 0.8" />
+                                <line x1="0" y1="-54" x2="0" y2="-64" stroke="#f59e0b" stroke-width="0.8" stroke-dasharray="1 1" />
+                                <text x="0" y="-66" font-size="3.5" fill="#fbbf24" text-anchor="middle" font-family="monospace">Ponte H (Tyr-104)</text>
+                                <text x="-14" y="-52" font-size="2.8" fill="#a7f3d0" font-family="monospace">Lys-42</text>
+                                <text x="14" y="-52" font-size="2.8" fill="#a7f3d0" font-family="monospace">Glu-88</text>
+                            </g>
+                        </g>
+
+                        <g transform="translate(690, 260)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        <g transform="translate(780, 260)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+
+                        <!-- Top-Right Curve Antigen (Center (800, 400), radius 140, angle -45° -> rotate 45°) -->
+                        <g transform="translate(899, 301) rotate(45)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        
+                        <!-- Right Cap Far Right Antigen (angle 0° -> rotate 90°) -->
+                        <g transform="translate(940, 400) rotate(90)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        
+                        <!-- Bottom-Right Curve Antigen (angle 45° -> rotate 135°) -->
+                        <g transform="translate(899, 499) rotate(135)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+
+                        <!-- Bottom Wall Antigens (pointing straight DOWN, rotate 180°) -->
+                        <g transform="translate(780, 540) rotate(180)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        <g transform="translate(690, 540) rotate(180)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        <g transform="translate(600, 540) rotate(180)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        <g transform="translate(510, 540) rotate(180)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        <g transform="translate(420, 540) rotate(180)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+
+                        <!-- Bottom-Left Curve Antigen (rotate -135°) -->
+                        <g transform="translate(301, 499) rotate(-135)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        
+                        <!-- Left Cap Far Left Antigen (rotate -90°) -->
+                        <g transform="translate(260, 400) rotate(-90)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                        
+                        <!-- Top-Left Curve Antigen (rotate -45°) -->
+                        <g transform="translate(301, 301) rotate(-45)" class="cursor-pointer" data-ag-click-level="1" data-ag-tip="Antígeno de superfície — clique para ampliar"><use href="#master-antigen-symbol" /></g>
+                    </g>
+                </g>
+
+                <!-- ANTIBODY SIMULATION LAYER (IgG Antibodies floating & docking on cell surface) -->
+                <g id="antibody-simulation-layer">
+                    
+                    <!-- PRIMARY DOCKING ANTIBODY (Target Antigen at (600, 204)) -->
+                    <g id="primary-antibody" class="antibody-transition" transform="translate(600, -80) rotate(180)" opacity="0">
+                        <!-- High Detail Zoomable IgG Structure -->
+                        <g id="primary-antibody-inner">
+                            <!-- Left Fab Arm -->
+                            <path d="M -16,-30 L -16,-12 L -3,-4 L -3,14" stroke="#38bdf8" stroke-width="3" fill="none" stroke-linecap="round" />
+                            <path d="M -24,-28 L -24,-12 L -16,-6" stroke="#818cf8" stroke-width="2.2" fill="none" stroke-linecap="round" />
+                            
+                            <!-- Right Fab Arm -->
+                            <path d="M 16,-30 L 16,-12 L 3,-4 L 3,14" stroke="#38bdf8" stroke-width="3" fill="none" stroke-linecap="round" />
+                            <path d="M 24,-28 L 24,-12 L 16,-6" stroke="#818cf8" stroke-width="2.2" fill="none" stroke-linecap="round" />
+                            
+                            <!-- Fc Stem Region -->
+                            <path d="M 0,-4 L 0,22" stroke="#0284c7" stroke-width="4" fill="none" stroke-linecap="round" />
+                            
+                            <!-- Paratope Binding Tips (Complementarity Determining Regions) -->
+                            <path d="M -19,-32 Q -16,-26 -13,-32" stroke="#f43f5e" stroke-width="2.2" fill="none" />
+                            <path d="M 13,-32 Q 16,-26 19,-32" stroke="#f43f5e" stroke-width="2.2" fill="none" />
+
+                            <!-- Label (Visible in zoom) -->
+                            <g id="antibody-labels" opacity="0">
+                                <text x="0" y="32" font-size="3" fill="#38bdf8" text-anchor="middle" font-weight="bold" font-family="sans-serif">Anticorpo IgG (Parátopo)</text>
+                                <text x="0" y="36" font-size="2.2" fill="#94a3b8" text-anchor="middle" font-family="sans-serif">Reconhecimento Específico do Epítopo</text>
+                            </g>
+                        </g>
+                    </g>
+
+                    <!-- SECONDARY ANTIBODIES FOR LEVEL 0 FULL-CELL SIMULATION -->
+                    <g id="secondary-antibodies" opacity="0" class="antibody-transition">
+                        <!-- Secondary Antibody 1 docking at Top-Left Antigen (510, 204) -->
+                        <g transform="translate(510, 185) rotate(180)"><use href="#antibody-symbol-small" /></g>
+                        
+                        <!-- Secondary Antibody 2 docking at Right Antigen (940, 400) -->
+                        <g transform="translate(1015, 400) rotate(-90)"><use href="#antibody-symbol-small" /></g>
+
+                        <!-- Secondary Antibody 3 docking at Bottom Antigen (600, 596) -->
+                        <g transform="translate(600, 615) rotate(0)"><use href="#antibody-symbol-small" /></g>
+
+                        <!-- Floating circulating antibody in extracellular fluid -->
+                        <g transform="translate(220, 160) rotate(35)"><use href="#antibody-symbol-small" /></g>
+                        <g transform="translate(980, 180) rotate(-40)"><use href="#antibody-symbol-small" /></g>
+                    </g>
+    
