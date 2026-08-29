@@ -7,15 +7,15 @@ ue em <strong>Destacar epítopo</strong>.</div>
   </div>
   <div class="card pad" style="margin-top:14px"><div class="kicker">Do modelo para a molécula real</div><div class="summary-grid"><div class="summary"><b>Chave–fechadura</b><p>A interface ocupa uma superfície tridimensional; não é uma ligação entre dois pontos.</p></div><div class="summary"><b>Química</b><p>Grupos químicos só interagem quando a dobra e o encaixe os posicionam próximos e orientados.</p></div><div class="summary"><b>Forças fracas</b><p>Pontes de H, van der Waals, água interfacial e outras contribuições somam-se sobre a área de contato.</p></div></div></div>
 <div class="card pad" style="margin-top:14px">
-    <div class="kicker">Síntese do aluno</div>
+    <div class="kicker">Registro da exploração</div>
+    <h3 style="margin:4px 0 4px">Guarde uma evidência do percurso — não é o relatório avaliativo.</h3>
+    <p class="note">O relatório de Imunologia será respondido no Google Forms. Este PDF serve apenas para registrar que você percorreu a atividade e quais condições testou; não exige análise de PDB nem descrição estrutural.</p>
     <div class="field"><label for="studentName">Nome</label><input id="studentName" placeholder="Nome completo"></div>
-    <div class="field"><label for="answer1">Por que uma boa complementaridade de forma não garante, sozinha, alta afinidade?</label><textarea id="answer1"></textarea></div>
-    <div class="field"><label for="answer2">Diferencie afinidade e avidez usando os exemplos desta atividade.</label><textarea id="answer2"></textarea></div>
-    <div class="nav"><button class="btn" data-back="6">← Voltar</button><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn good" id="makeReport" disabled>Gerar relatório / PDF</button></div></div>
+    <div class="nav"><button class="btn" data-back="6">← Voltar</button><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn good" id="makeReport" disabled>Gerar registro / PDF</button></div></div>
   </div>
 </section>
 
-<div id="report"><h2>Relatório — Reconhecimento antigênico</h2><p id="repWho"></p><div class="repgrid" id="repGrid"></div><table id="repContacts"></table><div class="repitem" style="margin-top:12px"><b>Chave–fechadura: utilidade e limite</b><span id="repA1"></span></div><div class="repitem" style="margin-top:8px"><b>Por que muitas forças fracas funcionam</b><span id="repA2"></span></div></div>
+<div id="report"><h2>Registro da atividade — Reconhecimento antigênico</h2><p id="repWho"></p><div class="repgrid" id="repGrid"></div><table id="repContacts"></table></div>
 </main>
 <script>
 (function(){"use strict";
