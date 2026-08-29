@@ -1,0 +1,214 @@
+  cls:"hydro",burial:.70,r:10.6,q:0, hb:0,color:"#f6ad55"},
+ I:{one:"I",three:"Ile",name:"isoleucina",   cls:"hydro",burial:.73,r:10.6,q:0, hb:0,color:"#f6ad55"},
+ M:{one:"M",three:"Met",name:"metionina",    cls:"hydro",burial:.48,r:10.8,q:0, hb:0,color:"#f6ad55"},
+ F:{one:"F",three:"Phe",name:"fenilalanina", cls:"arom", burial:.78,r:11.8,q:0, hb:0,color:"#c084fc"},
+ W:{one:"W",three:"Trp",name:"triptofano",   cls:"arom", burial:.81,r:13.0,q:0, hb:1,color:"#c084fc"},
+ Y:{one:"Y",three:"Tyr",name:"tirosina",     cls:"arom", burial:.55,r:12.2,q:0, hb:1,color:"#c084fc"},
+ S:{one:"S",three:"Ser",name:"serina",       cls:"polar",burial:-.10,r: 8.2,q:0, hb:1,color:"#34d399"},
+ T:{one:"T",three:"Thr",name:"treonina",     cls:"polar",burial: .00,r: 9.2,q:0, hb:1,color:"#34d399"},
+ N:{one:"N",three:"Asn",name:"asparagina",   cls:"polar",burial:-.48,r: 9.8,q:0, hb:1,color:"#34d399"},
+ Q:{one:"Q",three:"Gln",name:"glutamina",    cls:"polar",burial:-.45,r:10.6,q:0, hb:1,color:"#34d399"},
+ K:{one:"K",three:"Lys",name:"lisina",       cls:"pos",  burial:-.75,r:11.2,q: 1,hb:1,color:"#60a5fa"},
+ R:{one:"R",three:"Arg",name:"arginina",     cls:"pos",  burial:-.80,r:12.0,q: 1,hb:1,color:"#60a5fa"},
+ H:{one:"H",three:"His",name:"histidina",    cls:"pos",  burial:-.25,r:11.0,q:.5,hb:1,color:"#60a5fa"},
+ D:{one:"D",three:"Asp",name:"aspartato",    cls:"neg",  burial:-.70,r: 9.4,q:-1,hb:1,color:"#ff6b6b"},
+ E:{one:"E",three:"Glu",name:"glutamato",    cls:"neg",  burial:-.65,r:10.4,q:-1,hb:1,color:"#ff6b6b"},
+ C:{one:"C",three:"Cys",name:"cisteína",     cls:"cys",  burial:.45,r: 9.0,q:0, hb:0,color:"#facc15"},
+ G:{one:"G",three:"Gly",name:"glicina",      cls:"gly",  burial:-.05,r: 6.4,q:0, hb:0,color:"#94a3b8"},
+ P:{one:"P",three:"Pro",name:"prolina",      cls:"pro",  burial:-.15,r: 9.4,q:0, hb:0,color:"#94a3b8"}
+};
+const FOLD_ORIGINAL="MKVLCSFEGILNKWTDAPVCQLRY".split("");
+
+/* parâmetros do campo de força (unidades arbitrárias do modelo) */
+const FP={W:760,H:530,bond:30,
+ solv:.085,solvSigma:44,          // efeito hidrofóbico / solvatação
+ elec:190,elecScreen:55,          // eletrostática blindada
+ hbond:.9,hbRange:16,             // ligação de hidrogênio
+ ssTarget:26,ssK:.9,ssForm:38,ssSeek:.028,ssSeekRange:300,
+ angK:.25,angTarget:48,glyK:.05,proK:.90,proTarget:36,
+ damp:.86,dt:1,anneal:2.6,probe:8,
+ seeds:6,frames:700,recordEvery:6};
+
+/* PRNG determinístico: a MESMA sequência sempre gera a MESMA forma */
+function foldRng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;
+ let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function foldHash(seq){let h=2166136261>>>0;const s=seq.join("");
+ for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+
+const FA=c=>FOLD_AA[c];
+const foldDist=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y)||1e-6;
+
+/* ---------- estado de uma simulação ---------- */
+function foldMakeState(seq,seed){
+ const R=foldRng(seed),n=seq.length,nodes=[];
+ let x=FP.W/2-(n-1)*FP.bond*.35,y=FP.H/2,ang=R()*Math.PI*2;
+ for(let i=0;i<n;i++){nodes.push({x,y,vx:0,vy:0,fx:0,fy:0});
+  ang+=(R()-.5)*1.9;x+=Math.cos(ang)*FP.bond;y+=Math.sin(ang)*FP.bond;}
+ const S={seq:[...seq],nodes,ss:[],rand:R,n};foldCache(S);return S;
+}
+/* tabelas planas: o laço de pares roda milhares de vezes por enovelamento */
+function foldCache(S){
+ const n=S.n;S.rad=new Float64Array(n);S.bur=new Float64Array(n);S.q=new Float64Array(n);
+ S.hb=new Uint8Array(n);S.isC=new Uint8Array(n);S.angK=new Float64Array(n);S.angT=new Float64Array(n);
+ for(let i=0;i<n;i++){const a=FA(S.seq[i]);S.rad[i]=a.r;S.bur[i]=a.burial;S.q[i]=a.q;
+  S.hb[i]=a.hb;S.isC[i]=a.cls==="cys"?1:0;
+  S.angK[i]=a.cls==="gly"?FP.glyK:a.cls==="pro"?FP.proK:FP.angK;
+  S.angT[i]=a.cls==="pro"?FP.proTarget:FP.angTarget;}
+}
+function foldConstrain(a,b,target,stiff){
+ const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-6,c=(d-target)/d*.5*stiff;
+ a.x+=dx*c;a.y+=dy*c;b.x-=dx*c;b.y-=dy*c;
+}
+function foldUpdateSS(S){
+ const {seq,nodes}=S;
+ S.ss=S.ss.filter(([i,j])=>seq[i]==="C"&&seq[j]==="C");
+ const used=new Set();S.ss.forEach(([i,j])=>{used.add(i);used.add(j);});
+ const cys=[];for(let i=0;i<seq.length;i++)if(seq[i]==="C"&&!used.has(i))cys.push(i);
+ const cand=[];
+ for(let a=0;a<cys.length;a++)for(let b=a+1;b<cys.length;b++){
+  const i=cys[a],j=cys[b];if(Math.abs(i-j)<3)continue;
+  cand.push([foldDist(nodes[i],nodes[j]),i,j]);}
+ cand.sort((x,y)=>x[0]-y[0]);
+ for(const [d,i,j] of cand)
+  if(d<FP.ssForm&&!used.has(i)&&!used.has(j)){S.ss.push([i,j]);used.add(i);used.add(j);}
+}
+
+/* ---------- um passo de dinâmica ---------- */
+function foldStep(S,T){
+ const {nodes,n,rad,bur,q,hb,isC,angK,angT}=S;
+ for(let i=0;i<n;i++){const p=nodes[i];p.fx=0;p.fy=0;}
+ const ssBusy=new Uint8Array(n);
+ for(const [i,j] of S.ss){ssBusy[i]=1;ssBusy[j]=1;}
+ const s2=2*FP.solvSigma*FP.solvSigma,invS=8/FP.solvSigma;
+
+ for(let i=0;i<n;i++){
+  const a=nodes[i],ri=rad[i],bi=bur[i],qi=q[i],hbi=hb[i],ci=isC[i];
+  for(let j=i+2;j<n;j++){
+   const b=nodes[j],dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy,d=Math.sqrt(d2)||1e-6;
+   const ux=dx/d,uy=dy/d,contact=ri+rad[j];
+   let f=0;
+   /* SOLVATAÇÃO — o sinal vem de (burial_i + burial_j):
+      apolar+apolar -> atração (colapso do núcleo)
+      polar+polar   -> repulsão (ambos fogem para a superfície)
+      apolar+polar  -> ~neutro                                   */
+   f+=FP.solv*(bi+bur[j])*Math.exp(-d2/s2)*d*invS;
+   /* ELETROSTÁTICA blindada (comprimento de Debye) */
+   if(qi&&q[j]){const dd=d>contact?d:contact;
+    f+=-FP.elec*qi*q[j]*Math.exp(-dd/FP.elecScreen)/(dd*dd)*100;}
+   /* LIGAÇÃO DE HIDROGÊNIO — curto alcance entre grupos polares */
+   if(hbi&&hb[j]&&d<contact+FP.hbRange&&!(qi*q[j]>0))
+    f+=FP.hbond*(1-(d-contact)/FP.hbRange);
+   /* BUSCA DE CISTEÍNAS antes de a ponte se formar */
+   if(ci&&isC[j]&&j-i>=3&&d<FP.ssSeekRange&&!ssBusy[i]&&!ssBusy[j]) f+=FP.ssSeek*d;
+   /* VOLUME EXCLUÍDO */
+   if(d<contact) f-=(contact-d)*.9;
+   if(f>3.5)f=3.5;else if(f<-3.5)f=-3.5;
+   const fx=f*ux,fy=f*uy;
+   a.fx+=fx;a.fy+=fy;b.fx-=fx;b.fy-=fy;
+  }
+ }
+ /* rigidez do esqueleto: Gly = dobradiça, Pro = torção imposta */
+ for(let i=1;i<n-1;i++){
+  const a=nodes[i-1],b=nodes[i+1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-6;
+  let f=(d-angT[i])*angK[i];if(f>3)f=3;else if(f<-3)f=-3;
+  const ux=dx/d,uy=dy/d;
+  a.fx+=f*ux;a.fy+=f*uy;b.fx-=f*ux;b.fy-=f*uy;
+ }
+ /* agitação térmica — é o que permite sair de um mínimo local */
+ if(T>0){const amp=FP.anneal*T;
+  for(let i=0;i<n;i++){const p=nodes[i];p.fx+=(S.rand()-.5)*amp;p.fy+=(S.rand()-.5)*amp;}}
+ /* integração */
+ for(let i=0;i<n;i++){const p=nodes[i];
+  p.vx=(p.vx+p.fx*FP.dt)*FP.damp;p.vy=(p.vy+p.fy*FP.dt)*FP.damp;
+  const v=Math.hypot(p.vx,p.vy);if(v>6){p.vx*=6/v;p.vy*=6/v;}
+  p.x+=p.vx*FP.dt;p.y+=p.vy*FP.dt;}
+ /* projeção de restrições: ligação peptídica rígida, S–S covalente, impedimento estérico */
+ for(let it=0;it<4;it++){
+  for(let i=0;i<n-1;i++)foldConstrain(nodes[i],nodes[i+1],FP.bond,1);
+  for(const [i,j] of S.ss)foldConstrain(nodes[i],nodes[j],FP.ssTarget,FP.ssK);
+  for(let i=0;i<n;i++){const a=nodes[i];
+   for(let j=i+2;j<n;j++){const b=nodes[j],c=(rad[i]+rad[j])*.86;
+    const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy;
+    if(d2<c*c)foldConstrain(a,b,c,.7);}}
+ }
+ foldUpdateSS(S);
+ let cx=0,cy=0;for(let i=0;i<n;i++){cx+=nodes[i].x/n;cy+=nodes[i].y/n;}
+ const dx=FP.W/2-cx,dy=FP.H/2-cy;
+ for(let i=0;i<n;i++){nodes[i].x+=dx;nodes[i].y+=dy;}
+}
+
+/* ---------- energia (usada para escolher o melhor mínimo) ---------- */
+function foldEnergy(S){
+ const {seq,nodes,n}=S;let Esolv=0,Eelec=0,Ehb=0,Eclash=0;
+ for(let i=0;i<n;i++)for(let j=i+2;j<n;j++){
+  const ai=FA(seq[i]),aj=FA(seq[j]),d=foldDist(nodes[i],nodes[j]),contact=ai.r+aj.r;
+  const w=Math.exp(-(d*d)/(2*FP.solvSigma*FP.solvSigma));
+  Esolv+=-FP.solv*(ai.burial+aj.burial)*w*40;
+  if(ai.q&&aj.q){const dd=Math.max(d,contact);
+   Eelec+=FP.elec*ai.q*aj.q*Math.exp(-dd/FP.elecScreen)/dd*20;}
+  if(ai.hb&&aj.hb&&d<contact+FP.hbRange)Ehb+=-FP.hbond*(1-(d-contact)/FP.hbRange)*3;
+  if(d<contact)Eclash+=(contact-d)*(contact-d)*.08;
+ }
+ const Ess=-26*S.ss.length;
+ return {Esolv,Eelec,Ehb,Eclash,Ess,total:Esolv+Eelec+Ehb+Eclash+Ess};
+}
+
+/* ---------- acessibilidade ao solvente (análogo 2D de SASA) ---------- */
+function foldAccessibility(S){
+ const {nodes,seq,n}=S,out=[],N=36;
+ for(let i=0;i<n;i++){
+  const ri=FA(seq[i]).r+FP.probe;let free=0;
+  for(let k=0;k<N;k++){
+   const th=k*2*Math.PI/N,px=nodes[i].x+Math.cos(th)*ri,py=nodes[i].y+Math.sin(th)*ri;
+   let blocked=false;
+   for(let j=0;j<n;j++){if(j===i)continue;
+    if(Math.hypot(px-nodes[j].x,py-nodes[j].y)<FA(seq[j]).r+FP.probe*.5){blocked=true;break;}}
+   if(!blocked)free++;
+  }
+  out.push(free/N);
+ }
+ return out;
+}
+
+/* superpõe a conformação anterior sobre a atual (rotação + translação
+   ótimas). É o que torna a comparação de FORMA honesta. */
+function foldAlign(prev,cur){
+ const ca=foldCentroid(prev),cb=foldCentroid(cur);
+ const Pp=prev.map(p=>({x:p.x-ca.x,y:p.y-ca.y})),Qq=cur.map(p=>({x:p.x-cb.x,y:p.y-cb.y}));
+ let sxx=0,sxy=0,syx=0,syy=0;
+ for(let i=0;i<Pp.length;i++){sxx+=Pp[i].x*Qq[i].x;sxy+=Pp[i].x*Qq[i].y;
+  syx+=Pp[i].y*Qq[i].x;syy+=Pp[i].y*Qq[i].y;}
+ const th=Math.atan2(sxy-syx,sxx+syy),cs=Math.cos(th),sn=Math.sin(th);
+ return Pp.map(p=>({x:cs*p.x-sn*p.y+cb.x,y:sn*p.x+cs*p.y+cb.y}));
+}
+/* ---------- métricas de forma ---------- */
+function foldCentroid(ns){let x=0,y=0;for(const p of ns){x+=p.x/ns.length;y+=p.y/ns.length;}return{x,y};}
+function foldRg(ns){const c=foldCentroid(ns);
+ return Math.sqrt(ns.reduce((s,p)=>s+(p.x-c.x)**2+(p.y-c.y)**2,0)/ns.length);}
+/* RMSD após superposição ótima (Kabsch em 2D): mede MUDANÇA DE FORMA,
+   descontando translação e rotação — que não são mudança de forma. */
+function foldRmsd(A,B){
+ const ca=foldCentroid(A),cb=foldCentroid(B);
+ const P1=A.map(p=>({x:p.x-ca.x,y:p.y-ca.y})),Q1=B.map(p=>({x:p.x-cb.x,y:p.y-cb.y}));
+ let sxx=0,sxy=0,syx=0,syy=0;
+ for(let i=0;i<P1.length;i++){sxx+=P1[i].x*Q1[i].x;sxy+=P1[i].x*Q1[i].y;
+  syx+=P1[i].y*Q1[i].x;syy+=P1[i].y*Q1[i].y;}
+ const th=Math.atan2(sxy-syx,sxx+syy),cs=Math.cos(th),sn=Math.sin(th);
+ let s=0;
+ for(let i=0;i<P1.length;i++){const rx=cs*P1[i].x-sn*P1[i].y,ry=sn*P1[i].x+cs*P1[i].y;
+  s+=(rx-Q1[i].x)**2+(ry-Q1[i].y)**2;}
+ return Math.sqrt(s/P1.length);
+}
+
+/* =====================================================================
+   ESTADO DA INTERFACE
+   ===================================================================== */
+let foldMutLabel=null,foldGhostSeq=null,foldLastMut=null,foldAligned=null,foldPrevM=null,foldCoreLabel=null,foldChain=[...FOLD_ORIGINAL],foldSelected=10,foldSim=null,foldAcc=[],
+    foldGhost=null,foldPrev=null,foldRefE=null,foldLastRmsd=null,
+    foldPhase="idle",foldRAF=null,foldWater=[],foldTick=0;
+const foldShow={surface:true,core:true,water:true,ghost:true,shift:true,labels:false};
+
+const foldCanvas=document.getElementById("foldCanvas"),
+      foldCtx=foldCanvas.getContext("2d"),
+      foldPos=document.getElementById("foldPosition"),
+      foldAAse
