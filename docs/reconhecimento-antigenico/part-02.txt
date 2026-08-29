@@ -1,0 +1,60 @@
+der:1px solid var(--line);background:#0b1728;border-radius:14px;padding:13px}
+.avidity-card h3{font-size:13px;margin:0 0 7px}.avidity-card p{font-size:10px;color:#95a8c0;line-height:1.45}
+.avid-demo{height:205px;border:1px solid #263a55;border-radius:12px;background:#081422;overflow:hidden;margin-top:8px}
+.avid-demo svg{width:100%;height:100%;display:block}.avid-controls{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.avid-btn{border:1px solid #3a4d67;background:#0a1525;color:#dce7f5;border-radius:9px;padding:7px 9px;font-size:10px;font-weight:800}
+.avid-btn.active{border-color:#8d80dd;background:#1b2144}
+@media(max-width:950px){.fitgrid,.interface-grid,.testgrid,.chem-intro{grid-template-columns:1fr}.receptors{display:grid;grid-template-columns:repeat(3,1fr)}.aa-atlas{grid-template-columns:repeat(4,1fr)}}
+/* stage 6 — embedded PDB */
+.pdb-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px}.pdb-viewer-wrap{position:relative;border:1px solid var(--line);border-radius:17px;background:#06101c;overflow:hidden;min-height:570px}#pdbViewer{position:absolute;inset:0;width:100%;height:100%;min-height:570px}.pdb-overlay{position:absolute;z-index:5;left:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}.pdb-tag{padding:6px 8px;border-radius:9px;background:rgba(7,17,31,.82);border:1px solid rgba(255,255,255,.13);font-size:9px;font-weight:900;color:#dbe7f5}.pdb-loading{position:absolute;z-index:6;inset:0;display:grid;place-items:center;background:#07111f;color:#b7c8dc;font-size:12px;text-align:center;padding:30px}.pdb-loading.hide{display:none}.pdb-controls{display:flex;flex-direction:column;gap:9px}.pdb-group{border:1px solid var(--line);background:#0b1728;border-radius:14px;padding:11px}.pdb-group h3{font-size:11px;margin:0 0 7px}.pdb-group p{font-size:9px;color:#90a5bf;line-height:1.4;margin:4px 0}.pdb-buttons{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pdb-btn{border:1px solid #3a4d67;background:#091524;color:#dce8f5;border-radius:9px;padding:8px 7px;font-size:9px;font-weight:850;text-align:left}.pdb-btn:hover{border-color:#758ba6}.pdb-btn.active{background:#1c2942;border-color:#9b8af0}.pdb-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px;font-size:9px;color:#a7b8cd}.pdb-swatch{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px}.pdb-info{border:1px solid var(--line);background:#081422;border-radius:14px;padding:12px;font-size:10px;color:#afbed1;line-height:1.5;min-height:115px}.pdb-info strong{color:white}.pdb-info .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#d7c8ff}.pdb-note{margin-top:10px;border-left:3px solid #8b78e6;padding:9px 11px;background:#0b182a;border-radius:0 10px 10px 0;font-size:10px;color:#b9c8da;line-height:1.5}.pdb-question{border:1px solid var(--line);background:#0a1627;border-radius:13px;padding:11px;margin-top:10px}.pdb-question b{font-size:11px}.pdb-question p{font-size:9px;color:#96aac2;margin:4px 0}.pdb-qbuttons{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.pdb-qfeedback{font-size:9px;margin-top:7px;min-height:18px;color:#9fb0c8}@media(max-width:950px){.pdb-layout{grid-template-columns:1fr}.pdb-viewer-wrap,#pdbViewer{min-height:500px}}
+
+@media(max-width:900px){.compare-grid,.affinity-panel,.definition-strip,.avidity-grid{grid-template-columns:1fr}}@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}.scales{grid-template-columns:1fr}.aa-atlas{grid-template-columns:repeat(2,1fr)}.receptors{grid-template-columns:1fr}.opts{grid-template-columns:repeat(2,1fr)}.summary-grid,.repgrid{grid-template-columns:1fr}.head{align-items:flex-start;flex-direction:column;padding:11px 0}.hero{flex-direction:column}}
+@media print{body{background:white;color:black}.no-print,header,.steps,.stage{display:none!important}#report{display:block!important}main{padding:0}.wrap{max-width:none}.card{box-shadow:none;border:0;background:white}.repitem{background:white}}
+
+/* Etapa 1 — explorador interativo de bacilo/antígeno/epítopo */
+.ag-explorer{border:1px solid var(--line);border-radius:16px;background:#07111f;overflow:hidden;margin-top:14px}
+.ag-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 12px;border-bottom:1px solid #24364e;background:#0b1728}
+.ag-zoom-nav,.ag-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.ag-zoom-btn,.ag-tool-btn{border:1px solid #344b68;background:#0a1627;color:#aebdd0;border-radius:10px;padding:8px 10px;font-size:10px;font-weight:850}.ag-zoom-btn:hover,.ag-tool-btn:hover{border-color:#6f84a0;color:white}.ag-zoom-btn.active{background:linear-gradient(135deg,#cc2778,#7a48cf);border-color:#d85aa0;color:white;box-shadow:0 7px 22px rgba(204,39,120,.2)}
+.ag-arrow{color:#50637d;font-size:12px}.ag-canvas{position:relative;background:#020617;min-height:520px;overflow:hidden}.ag-svg{display:block;width:100%;height:520px;cursor:grab;user-select:none}.ag-svg:active{cursor:grabbing}.ag-explorer .cursor-pointer{cursor:pointer}.ag-explorer .glow-antigen{filter:drop-shadow(0 0 6px rgba(236,72,153,.8))}.ag-explorer .glow-epitope{filter:drop-shadow(0 0 8px rgba(16,185,129,.9))}
+@keyframes ag-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes ag-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(1.5deg)}}@keyframes ag-epi{0%,100%{opacity:.85;filter:drop-shadow(0 0 3px #10b981)}50%{opacity:1;filter:drop-shadow(0 0 8px #34d399)}}@keyframes ag-dash{to{stroke-dashoffset:500}}
+.ag-explorer .animate-float{animation:ag-float 6s ease-in-out infinite}.ag-explorer .animate-pili{transform-origin:center;animation:ag-wave 4s ease-in-out infinite}.ag-explorer .animate-epitope-glow{animation:ag-epi 2s ease-in-out infinite}.ag-explorer .focus-ring{stroke-dasharray:6;animation:ag-dash 15s linear infinite}.ag-explorer .antibody-transition{transition:transform .9s cubic-bezier(.34,1.56,.64,1),opacity .6s ease}.ag-explorer .transition-opacity{transition:opacity .5s ease}
+.ag-level{position:absolute;right:12px;top:12px;z-index:6;padding:7px 10px;border:1px solid rgba(236,72,153,.35);border-radius:999px;background:rgba(15,23,42,.9);color:#f472b6;font:800 9px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.05em;pointer-events:none}
+.ag-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:6;max-width:min(620px,86%);padding:8px 12px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(15,23,42,.90);color:#c5d3e5;font-size:10px;text-align:center;pointer-events:none;transition:opacity .2s}
+.ag-tooltip{position:absolute;z-index:12;display:none;max-width:250px;padding:8px 10px;border-radius:10px;background:rgba(5,14,27,.96);border:1px solid #596d87;color:#edf5ff;font-size:10px;line-height:1.35;box-shadow:0 10px 28px rgba(0,0,0,.42);pointer-events:none}.ag-tooltip.show{display:block}
+.ag-caption{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:11px 13px;border-top:1px solid #24364e;background:#0a1627}.ag-caption strong{display:block;font-size:11px}.ag-caption span{display:block;color:#91a6bf;font-size:10px;margin-top:2px}.ag-metric{white-space:nowrap;border:1px solid #31455f;border-radius:10px;padding:7px 9px;color:#c9d6e7;font-size:9px;font-weight:850}.ag-metric b{color:#f472b6}
+.ag-question-guide{margin-top:12px;border-top:1px solid var(--line);padding-top:13px}.ag-question-guide h3{margin:2px 0 3px;font-size:15px}.ag-question-guide p{margin:0;color:#93a7c0;font-size:11px}
+@media(max-width:760px){.ag-toolbar{align-items:flex-start}.ag-canvas,.ag-svg{min-height:420px;height:420px}.ag-caption{grid-template-columns:1fr}.ag-metric{white-space:normal}.ag-level{font-size:8px;max-width:62%;text-align:right}.ag-hint{border-radius:12px}}
+
+
+/* stage 6 — peptide folding simulator (v13) */
+.fold-layout{display:grid;grid-template-columns:minmax(0,1fr) 358px;gap:14px}
+.fold-view{position:relative;border:1px solid var(--line);border-radius:17px;background:radial-gradient(circle at 50% 46%,rgba(246,173,85,.06),transparent 30%),radial-gradient(circle at 50% 50%,rgba(90,167,255,.045),transparent 62%),#06101c;overflow:hidden;min-height:530px}
+.fold-canvas{display:block;width:100%;height:auto;aspect-ratio:760/530;touch-action:manipulation;cursor:pointer}
+.fold-overlay{position:absolute;left:10px;top:10px;z-index:3;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;max-width:70%}
+.fold-tag{padding:6px 8px;border-radius:9px;background:rgba(7,17,31,.86);border:1px solid rgba(255,255,255,.13);font-size:9px;font-weight:900;color:#dbe7f5}
+.fold-status{position:absolute;right:10px;top:10px;z-index:4;padding:7px 11px;border-radius:11px;background:rgba(7,17,31,.9);border:1px solid rgba(255,255,255,.15);font-size:10px;font-weight:900;color:#cfe0f5;display:none;align-items:center;gap:8px}
+.fold-status.on{display:flex}
+.fold-status i{display:block;width:60px;height:4px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;position:relative}
+.fold-status i b{position:absolute;inset:0 100% 0 0;background:linear-gradient(90deg,#5aa7ff,#c084fc);transition:right .12s linear}
+.fold-toggles{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.fold-toggle{border:1px solid #33465f;background:#0a1525;color:#8ea4bd;border-radius:99px;padding:6px 10px;font-size:9px;font-weight:850}
+.fold-toggle.on{border-color:#5aa7ff;background:#12243c;color:#cfe4ff}
+.fold-controls{display:flex;flex-direction:column;gap:9px}
+.fold-group{border:1px solid var(--line);background:#0b1728;border-radius:14px;padding:11px}
+.fold-group h3{font-size:11px;margin:0 0 7px}
+.fold-group p{font-size:9px;color:#90a5bf;line-height:1.45;margin:4px 0}
+.fold-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fold-field label{display:block;font-size:9px;color:#9fb0c8;font-weight:850;margin-bottom:4px}
+.fold-field select{width:100%;background:#081422;border:1px solid #3a4d67;border-radius:9px;color:white;padding:8px 7px;font-size:10px}
+.fold-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.fold-btn{border:1px solid #3a4d67;background:#0a1525;color:#dce7f5;border-radius:9px;padding:8px 7px;font-size:9.5px;font-weight:850;line-height:1.25;text-align:center}
+.fold-btn:hover{border-color:#5c76a0;background:#101f34}
+.fold-btn.primary{border-color:#5aa7ff;background:#14273f;color:#e6f1ff}
+.fold-btn[disabled]{opacity:.45;pointer-events:none}
+.fold-seq{display:flex;flex-wrap:wrap;gap:4px;margin-top:11px}
+.fold-chip{border:1px solid #2f4360;background:#0a1525;color:#c3d4e8;border-radius:8px;padding:5px 6px;font-size:9.5px;font-weight:900;font-variant-numeric:tabular-nums}
+.fold-chip.selected{border-color:#e9d5ff;background:#241b3d;color:#f3e8ff}
+.fold-chip.mutated{border-color:#f6bd4a;color:#fde68a}
+.fold-chip i{font-style:normal;opacity:.5;font-size:8px;margin-right:1px}
+.fold-note{font-size:9.5px;color:#8fa3bd;line-height:1.5;margin-top:10px;border-top:1px solid rgba(255,255,255,.07);padding-top:9px}
+.fold-metrics{display:
