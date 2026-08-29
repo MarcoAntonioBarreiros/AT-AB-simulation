@@ -1,0 +1,100 @@
+/span></div></div></div>
+  <div class="fold-layout">
+    <div class="card pad">
+      <div class="fold-view" id="foldView">
+        <canvas id="foldCanvas" class="fold-canvas" width="760" height="530" aria-label="Simulador bidimensional de dobramento de peptídeo"></canvas>
+        <div class="fold-overlay"><span class="fold-tag">clique em um resíduo</span><span class="fold-tag">tracejado cinza = forma anterior</span><span class="fold-tag">setas = para onde cada resíduo foi</span></div>
+        <div class="fold-status" id="foldStatus"><span id="foldStatusText">dobrando…</span><i><b id="foldStatusBar"></b></i></div>
+      </div>
+      <div class="fold-toggles">
+        <button class="fold-toggle on" data-fold-view="surface">superfície</button>
+        <button class="fold-toggle on" data-fold-view="core">núcleo hidrofóbico</button>
+        <button class="fold-toggle on" data-fold-view="water">água</button>
+        <button class="fold-toggle on" data-fold-view="ghost">forma anterior</button>
+        <button class="fold-toggle on" data-fold-view="shift">setas de deslocamento</button>
+        <button class="fold-toggle" data-fold-view="labels">numeração</button>
+      </div>
+      <div class="fold-seq" id="foldSeq" aria-label="Sequência do peptídeo"></div>
+      <div class="visual-legend"><div><i class="visual-sample" style="background:rgba(125,211,252,.55)"></i><b>Água</b><span>pontos azuis fora da superfície</span></div><div><i class="visual-sample" style="background:rgba(147,197,253,.20);border:1px solid #93c5fd"></i><b>Superfície acessível</b><span>contorno que a água consegue alcançar</span></div><div><i class="visual-sample" style="background:rgba(246,173,85,.35);border:1px solid #f6ad55"></i><b>Núcleo hidrofóbico</b><span>apolares efetivamente enterrados</span></div><div><i class="visual-sample" style="border:2px dashed #cbd5e1;background:transparent"></i><b>Forma anterior</b><span>referência para comparar a mudança</span></div><div><i class="visual-sample" style="background:linear-gradient(90deg,#38bdf8 0 50%,#172033 50%)"></i><b>Anel do resíduo</b><span>claro = exposto; escuro = enterrado</span></div></div><details class="fold-details"><summary>Detalhe técnico da comparação de formas</summary><div>A forma anterior é superposta por rotação ótima (Kabsch) antes do desenho. Assim, uma simples rotação global da molécula não é contada como mudança de forma. O modelo é um mínimo de energia bidimensional e não prediz a estrutura terciária real.</div></details>
+    </div>
+    <aside class="fold-controls">
+
+      <div class="fold-group"><h3>1. Faça uma mutação</h3>
+        <div class="fold-row">
+          <div class="fold-field"><label for="foldPosition">Posição</label><select id="foldPosition"></select></div>
+          <div class="fold-field"><label for="foldAA">Novo aminoácido</label><select id="foldAA"></select></div>
+        </div>
+        <div class="fold-actions">
+          <button class="fold-btn primary" id="foldMutate">Aplicar e reenovelar</button>
+          <button class="fold-btn" id="foldRelax">↻ Reenovelar</button>
+        </div>
+        <p id="foldSelection">Selecione um resíduo no desenho ou pela lista.</p>
+      </div>
+
+      <div class="fold-group"><h3>2. Experimentos rápidos</h3>
+        <div class="fold-actions">
+          <button class="fold-btn" data-fold-preset="buryCharge">Enterrar uma carga<br>(Leu11 → Asp)</button>
+          <button class="fold-btn" data-fold-preset="exposeHydro">Expor apolar<br>(Ser6 → Ile)</button>
+          <button class="fold-btn" data-fold-preset="breakSS">Romper a S–S<br>(Cys20 → Ala)</button>
+          <button class="fold-btn" data-fold-preset="restoreSS">Restaurar as cisteínas</button>
+          <button class="fold-btn" data-fold-preset="hinge">Dobradiça → rígido<br>(Gly9 → Pro)</button>
+          <button class="fold-btn" data-fold-preset="loseAnchor">Perder âncora<br>(Trp14 → Glu)</button>
+          <button class="fold-btn" data-fold-preset="denature">Desnaturar<br>(apolares → Asp)</button>
+          <button class="fold-btn" data-fold-preset="reset">Sequência original</button>
+        </div>
+      </div>
+
+      <div class="fold-group"><h3>3. O que está estabilizando a forma?</h3>
+        <div class="fold-metrics">
+          <div class="fold-metric"><div class="k">apolares enterrados</div><div class="v" id="foldHydro">—</div></div>
+          <div class="fold-metric"><div class="k">polares/carregados expostos</div><div class="v" id="foldPhilic">—</div></div>
+          <div class="fold-metric"><div class="k">pontes S–S</div><div class="v" id="foldSS">—</div></div>
+          <div class="fold-metric"><div class="k">raio de giro (compactação)</div><div class="v" id="foldRg">—</div></div>
+        </div>
+        <div class="fold-change" id="foldChange"></div>
+        <div class="fold-bars" id="foldBars"></div>
+        <div class="fold-delta"><div class="k">energia relativa à sequência original</div><div class="v" id="foldDeltaE">—</div></div>
+        <div class="fold-delta"><div class="k">mudança de forma (RMSD após superposição)</div><div class="v" id="foldRmsd">—</div></div>
+        <div class="fold-legend">
+          <span><i class="fold-dot" style="background:#f6ad55"></i>apolar</span>
+          <span><i class="fold-dot" style="background:#c084fc"></i>aromático</span>
+          <span><i class="fold-dot" style="background:#34d399"></i>polar</span>
+          <span><i class="fold-dot" style="background:#60a5fa"></i>carga +</span>
+          <span><i class="fold-dot" style="background:#ff6b6b"></i>carga −</span>
+          <span><i class="fold-dot" style="background:#facc15"></i>cisteína</span>
+          <span><i class="fold-dot" style="background:#94a3b8"></i>Gly / Pro</span>
+        </div>
+      </div>
+
+      <div class="fold-info" id="foldInfo"><strong>Comece pela forma basal.</strong><br>Ative/desative <strong>água</strong>, <strong>superfície</strong> e <strong>núcleo hidrofóbico</strong> separadamente. Identifique pelo menos um resíduo apolar enterrado e um polar/carregado exposto. Só então aplique uma mutação e compare o contorno tracejado com o novo.</div>
+
+      <div class="fold-question"><b>Teste rápido</b>
+        <p>Você troca um resíduo apolar do núcleo por um aminoácido carregado e a forma inteira muda. Por quê?</p>
+        <div class="fold-qbuttons">
+          <button class="fold-btn" data-foldq="primary">Porque a estrutura primária mudou</button>
+          <button class="fold-btn" data-foldq="forces">Porque mudou o conjunto de interações que sustenta o mínimo de energia</button>
+          <button class="fold-btn" data-foldq="size">Porque o novo resíduo é maior e não cabe</button>
+        </div>
+        <div class="fold-qfeedback" id="foldQFeedback"></div>
+      </div>
+
+      <div class="nav" style="margin-top:0"><button class="btn" data-back="5">← Afinidade e avidez</button><button class="btn primary" id="go7">Ver estrutura 3D real →</button></div>
+    </aside>
+  </div>
+  <div class="card pad" style="margin-top:14px"><div class="summary-grid">
+    <div class="summary"><b>Sequência</b><p>Cada substituição muda propriedades locais: volume, polaridade, carga, capacidade de ligação de hidrogênio e liberdade conformacional do esqueleto.</p></div>
+    <div class="summary"><b>Efeito hidrofóbico</b><p>O principal motor do enovelamento não é uma atração entre grupos apolares, mas a reorganização da água: enterrar superfície apolar libera moléculas de água ordenadas.</p></div>
+    <div class="summary"><b>Ponte dissulfeto</b><p>Ligação covalente entre dois tióis de cisteína. Ela não cria a dobra — ela <em>trava</em> uma dobra que já existia, reduzindo a entropia do estado desenovelado.</p></div>
+    <div class="summary"><b>Por que isso importa aqui</b><p>O epítopo que você viu nas etapas anteriores só existe porque a cadeia se dobrou desta forma. Mude a dobra e o determinante antigênico desaparece.</p></div>
+  </div></div>
+</section>
+
+<section class="stage" id="s7">
+  <div class="hero"><div><h2>7. Da representação ao contato real em 3D</h2><p>Agora abandone os esquemas. Esta é a estrutura experimental do complexo <strong>Fab D1.3–lisozima</strong> (PDB 1FDL). Use uma sequência de visualizações para não se perder na estrutura.</p></div><span class="badge">PDB 1FDL • 2,5 Å</span></div>
+<div class="card pad observe-card"><div class="observe-head"><div><h3>👁 Não comece pelos átomos: faça quatro aproximações</h3><p>O erro mais comum de quem nunca usou um visualizador molecular é dar zoom demais e perder a referência espacial. Siga esta ordem.</p></div><span class="observe-pill">lente 5 · 3D real</span></div><div class="pdb-roadmap"><div><b>1 · Complexo</b><span>Veja quais partes pertencem ao antígeno e ao Fab.</span></div><div><b>2 · Superfícies</b><span>Troque “fitas” por volumes e localize onde os volumes se encostam.</span></div><div><b>3 · Zoom na interface</b><span>Isole a região de contato entre os dois parceiros.</span></div><div><b>4 · Átomos</b><span>Só então veja resíduos e átomos de epítopo + parátopo.</span></div></div></div>
+  <div class="pdb-layout">
+    <div class="card pad"><div class="pdb-viewer-wrap"><div id="pdbViewer"></div><div class="pdb-overlay"><span class="pdb-tag">arrastar: girar</span><span class="pdb-tag">scroll: zoom</span></div><div class="pdb-loading" id="pdbLoading"><div><strong>Carregando PDB 1FDL…</strong><br><span style="color:#7f93ad">O viewer e a estrutura são carregados pela internet, mas permanecem dentro desta página.</span></div></div></div></div>
+    <aside class="pdb-controls">
+      <div class="pdb-group"><h3>1. O que observar</h3><div class="pdb-buttons"><button class="pdb-btn active" data-view3d="complex">Complexo completo</button><button class="pdb-btn" data-view3d="antigen">Somente antígeno</button><button class="pdb-btn" data-view3d="antibody">Somente o Fab</button><button class="pdb-btn" data-view3d="surface">Superfícies</button><button class="pdb-btn" data-view3d="epitope">Epítopo publicado</button><button class="pdb-btn" data-view3d="interface">Zoom na interface</button></div><div class="pdb-legend"><span><i class="pdb-swatch" style="background:#f59e0b"></i>Lisozima</span><span><i class="pdb-swatch" style="background:#42d3e8"></i>Fab leve</span><span><i class="pdb-swatch" style="background:#a78bfa"></i>Fab pesada</span><span><i class="pdb-swatch" style="background:#fb7185"></i>Epítopo (antígeno)</span></div></div>
+      <div class="pdb-group"><h3>2. Representação</h3><div class="pdb-buttons"><button class="pdb-btn active" data-style3d="cartoon">Cartoon</button><button class="pdb-btn" data-style3d="epires">Resíduos do epítopo</button><button class="pdb-btn" data-style3d="interfaceatoms">Átomos da interface</button><button class="pdb-btn" id="pdbReset">Resetar orientação</button></div></div>
+      <div class="pdb-info" id="pdbInfo"><strong>Estrutura:</strong> PDB <span class="mono">1FDL</span><br>Antígeno: lisozima, cadeia C.<br>Anticorpo D1.3: cadeia leve A + pesada B.<br><br>Gire o complexo e depois cliq
