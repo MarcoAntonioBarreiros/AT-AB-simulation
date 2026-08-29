@@ -1,0 +1,83 @@
+a-test="unfold"><b>Desestabilizar a conformação do antígeno</b><span>A forma tridimensional de um epítopo conformacional se perde.</span></button><button class="test" data-test="mutation"><b>Trocar um resíduo do epítopo</b><span>Uma mutação local altera uma região de contato.</span></button></div><div class="test-result" id="testResult"><strong>Escolha um experimento.</strong><br>A rede à direita mostrará quais contribuições ficam mais comprometidas.</div></div>
+<div class="card pad"><div class="network"><svg id="testSvg" viewBox="0 0 720 360"><text x="360" y="28" text-anchor="middle" class="surface-label">REDE DE CONTATOS NA INTERFACE</text><path id="netTop" d="M70 95 C150 60 210 125 280 82 S420 118 500 78 S600 120 650 88" fill="none" stroke="#f6ad55" stroke-width="7" stroke-linecap="round"/><path id="netBottom" d="M70 265 C150 300 210 235 280 278 S420 242 500 282 S600 240 650 272" fill="none" stroke="#7c8cff" stroke-width="7" stroke-linecap="round"/><g id="testBonds"></g><g id="testEnvironment"></g><text x="360" y="344" text-anchor="middle" id="networkCaption" class="fit-title">interface íntegra</text></svg></div><div class="summary-grid"><div class="summary"><b>Forma</b><p>Define se muitos átomos conseguem aproximar-se ao mesmo tempo.</p></div><div class="summary"><b>Química</b><p>Define se os grupos próximos atraem, acomodam água ou se repelem.</p></div><div class="summary"><b>Afinidade</b><p>É propriedade do conjunto; não existe uma “superligação” única.</p></div></div><div class="callout" style="margin-top:10px"><strong>Mensagem final:</strong> a analogia chave–fechadura descreve a complementaridade de forma, mas a “fechadura” se mantém ocupada porque muitas interações não covalentes — eletrostáticas, pontes de hidrogênio, efeito hidrofóbico e van der Waals — contribuem simultaneamente.</div></div></div>
+
+<div class="card pad" style="margin-top:14px">
+  <div class="callout"><strong>Mas a ligação não é tudo-ou-nada.</strong> Um parátopo pode encaixar apenas parcialmente, ou pode ter boa geometria e química ruim. Isso muda a <strong>afinidade</strong>. Na etapa final, você também verá por que multivalência muda a <strong>avidez</strong> sem necessariamente mudar a afinidade de cada contato.</div>
+  <div class="nav"><button class="btn" data-back="3">← Voltar</button><button class="btn primary" id="go5">Afinidade × avidez →</button></div>
+</div>
+</section>
+
+<section class="stage" id="s5">
+  <div class="hero"><div><h2>5. Encaixe parcial, afinidade e avidez</h2><p>Uma ligação pode existir mesmo sem complementaridade perfeita. Agora compare separadamente o efeito da <strong>forma</strong> e da <strong>química</strong> e, depois, mantenha a afinidade individual constante para observar o efeito da multivalência.</p></div><span class="badge">afinidade ≠ avidez</span></div>
+
+  <div class="card pad">
+    <div class="kicker">Parte A — afinidade</div>
+    <h3 style="margin:4px 0 4px">Três interfaces conseguem se aproximar. Clique e compare.</h3>
+    <p class="note">O indicador é qualitativo: ele representa estabilidade relativa da interface, não um valor calculado de Kd.</p>
+
+    <div class="compare-grid" id="compareGrid">
+      <button class="compare-card" data-case="shapePoor">
+        <svg viewBox="0 0 300 164">
+          <path d="M18 42C55 16 88 62 125 34S190 66 226 36S265 54 282 44L282 12L18 12Z" fill="#213650" stroke="#f6ad55" stroke-width="4"/><text x="24" y="26" font-size="8.5" fill="#f6ad55" opacity=".9">epítopo (o mesmo nos três)</text>
+          <path d="M18 108C62 94 93 108 128 97S194 109 232 98S268 108 282 102L282 134L18 134Z" fill="#213650" stroke="#7c8cff" stroke-width="4"/>
+          <g stroke="#34d399" stroke-width="3" stroke-linecap="round"><line x1="70" y1="41.3" x2="70" y2="98.3"/><line x1="220" y1="43.2" x2="220" y2="97.5"/></g>
+          <text x="150" y="156" text-anchor="middle" fill="#9fb0c8" font-size="10">poucos contatos, mas favoráveis</text>
+        </svg>
+        <h3>Forma parcial • química boa</h3><p>Os pontos que encostam combinam quimicamente, porém grande parte da interface permanece distante.</p>
+      </button>
+
+      <button class="compare-card" data-case="chemPoor">
+        <svg viewBox="0 0 300 164">
+          <path d="M18 42C55 16 88 62 125 34S190 66 226 36S265 54 282 44L282 12L18 12Z" fill="#213650" stroke="#f6ad55" stroke-width="4"/><text x="24" y="26" font-size="8.5" fill="#f6ad55" opacity=".9">epítopo (o mesmo nos três)</text>
+          <path d="M18 100C55 74 88 120 125 92S190 124 226 94S265 112 282 102L282 134L18 134Z" fill="#213650" stroke="#7c8cff" stroke-width="4"/>
+          <g stroke="#fb7185" stroke-width="3" stroke-linecap="round"><line x1="65" y1="40.0" x2="65" y2="92.0"/><line x1="145" y1="29.4" x2="145" y2="81.4"/><line x1="225" y1="39.9" x2="225" y2="91.9"/></g>
+          <text x="150" y="156" text-anchor="middle" fill="#fda4af" font-size="10">encaixe bom, química desfavorável</text>
+        </svg>
+        <h3>Forma boa • química ruim</h3><p>A superfície se acomoda, mas vários grupos próximos são incompatíveis ou repulsivos.</p>
+      </button>
+
+      <button class="compare-card" data-case="bothGood">
+        <svg viewBox="0 0 300 164">
+          <path d="M18 42C55 16 88 62 125 34S190 66 226 36S265 54 282 44L282 12L18 12Z" fill="#213650" stroke="#f6ad55" stroke-width="4"/><text x="24" y="26" font-size="8.5" fill="#f6ad55" opacity=".9">epítopo (o mesmo nos três)</text>
+          <path d="M18 100C55 74 88 120 125 92S190 124 226 94S265 112 282 102L282 134L18 134Z" fill="#213650" stroke="#7c8cff" stroke-width="4"/>
+          <g stroke="#34d399" stroke-width="3" stroke-linecap="round"><line x1="55" y1="37.8" x2="55" y2="89.8"/><line x1="105" y1="45.9" x2="105" y2="97.9"/><line x1="155" y1="30.4" x2="155" y2="82.4"/><line x1="205" y1="47.6" x2="205" y2="99.6"/><line x1="255" y1="31.0" x2="255" y2="83.0"/></g>
+          <g fill="#e9d5ff" opacity=".85"><circle cx="80" cy="67.8" r="2"/><circle cx="130" cy="73.9" r="2"/><circle cx="180" cy="60.4" r="2"/><circle cx="230" cy="75.6" r="2"/></g>
+          <text x="150" y="156" text-anchor="middle" fill="#6ee7b7" font-size="10">forma + química complementares</text>
+        </svg>
+        <h3>Forma boa • química boa</h3><p>Grande área de contato e grupos compatíveis permitem somar muitas interações fracas.</p>
+      </button>
+    </div>
+
+    <div class="affinity-panel">
+      <div class="affinity-readout" id="affinityReadout"><h3>O que é afinidade?</h3><p>Afinidade é a força da interação entre <strong>um parátopo</strong> e <strong>um epítopo</strong>. Ela é propriedade da interface completa, não de uma única ponte salina ou ponte de hidrogênio.</p></div>
+      <div class="aff-meter"><div class="kicker">Afinidade relativa</div><div class="big" id="affValue" style="font-size:15px;opacity:.65">selecione uma interface</div><div class="bar"><div class="fill" id="affFill" style="width:0"></div></div><div class="small">indicador conceitual — comparativo entre as três, não um Kd</div></div>
+    </div>
+
+    <div class="definition-strip">
+      <div class="definition"><b>Afinidade</b><p>Força de uma interação parátopo–epítopo individual. Depende da complementaridade geométrica e química dessa interface.</p></div>
+      <div class="definition"><b>Avidez</b><p>Força funcional do conjunto quando múltiplos sítios e epítopos podem se ligar simultaneamente. Depende também da valência e da geometria.</p></div>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-top:14px">
+    <div class="kicker">Parte B — mesma afinidade individual, avidez diferente</div>
+    <h3 style="margin:4px 0 4px">Agora não mude a qualidade de cada contato; mude apenas quantos podem ocorrer ao mesmo tempo.</h3>
+    <div class="avidity-grid">
+      <div class="avidity-card"><h3>Monovalente</h3><p>Um parátopo liga um epítopo. Quando esse único contato se desfaz, o complexo se separa.</p>
+        <div class="avid-demo"><svg viewBox="0 0 420 205"><circle cx="210" cy="65" r="27" fill="#263952" stroke="#f6ad55" stroke-width="4"/><path d="M210 135L173 175M210 135L247 175M210 135V101" stroke="#7c8cff" stroke-width="12" stroke-linecap="round"/><line x1="210" y1="93" x2="210" y2="103" stroke="#34d399" stroke-width="5"/><text x="210" y="194" text-anchor="middle" fill="#9fb0c8" font-size="10">afinidade do contato = constante</text></svg></div>
+      </div>
+      <div class="avidity-card"><h3>Multivalente</h3><p>Os contatos individuais têm a mesma afinidade. O que muda é a chance de várias ligações permanecerem ou se refazerem antes da separação completa.</p>
+        <div class="avid-demo"><svg id="avidSvg" viewBox="0 0 420 205"><g id="antigenDots"></g><g id="antibodyArms"></g><g id="avidLinks"></g><text x="210" y="194" text-anchor="middle" fill="#9fb0c8" font-size="10" id="avidCaption"></text></svg></div>
+        <div class="avid-controls"><button class="avid-btn active" data-valency="2">Bivalente</button><button class="avid-btn" data-valency="5">Multivalente</button><button class="avid-btn" data-valency="sparse">Epítopos mal espaçados</button></div>
+      </div>
+    </div>
+    <div class="affinity-readout" id="avidityReadout" style="margin-top:12px"><h3>Avidez pode aumentar sem aumentar afinidade</h3><p>Se dois ou mais contatos ocorrem simultaneamente, a separação funcional do complexo se torna menos provável. Cada sítio continua tendo a mesma afinidade intrínseca.</p></div>
+  </div>
+
+  <div class="card pad" style="margin-top:14px"><div class="nav"><button class="btn" data-back="4">← Voltar</button><button class="btn primary" id="go6">Explorar dobramento do peptídeo →</button></div></div>
+</section>
+
+
+<section class="stage" id="s6">
+  <div class="hero"><div><h2>6. Da sequência à forma: dobre um peptídeo</h2><p>Troque um aminoácido e observe a cadeia <strong>reenovelar</strong>. No modelo, estados de menor energia favorecem <strong>enterrar grupos apolares</strong>, manter muitos grupos <strong>polares/carregados acessíveis ao solvente</strong> e respeitar restrições como pontes dissulfeto.</p></div><span class="badge">modelo 2D qualitativo • não prediz estrutura real</span></div>
+<div class="card pad observe-card"><div class="observe-head"><div><h3>👁 Roteiro de observação antes da primeira mutação</h3><p>Faça esta leitura da forma basal uma vez; depois as mutações ficam muito mais fáceis de interpretar.</p></div><span class="observe-pill">lente 4 · exposição ao solvente</span></div><div class="watch-sequence"><div class="watch-step"><b><i>1</i> Água</b><span>Localize os pontos azuis fora da molécula: esse é o solvente aquoso.</span></div><div class="watch-step"><b><i>2</i> Superfície</b><span>Siga o contorno azul-claro: ele separa o interior da região acessível à água.</span></div><div class="watch-step"><b><i>3</i> Núcleo</b><span>Procure o miolo alaranjado e veja quais resíduos apolares ficaram enterrados.</span></div><div class="watch-step"><b><i>4</i> Depois da mutação</b><span>Compare o contorno novo com o tracejado cinza e as setas de deslocamento.
